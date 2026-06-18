@@ -1,0 +1,25 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.stocksnap">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
+
+    <application
+        android:name="com.stocksnap.StockSnapApplication"
+        android:allowBackup="true"
+        android:icon="@drawable/app_logo"
+        android:label="StockSnap"
+        android:theme="@style/Theme.StockSnap">
+        <activity
+            android:name="com.stocksnap.ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

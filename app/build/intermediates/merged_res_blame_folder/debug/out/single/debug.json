@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "com.stocksnap.app-merged_res-80:/drawable_app_logo.jpg.flat",
+        "source": "com.stocksnap.app-main-82:/drawable/app_logo.jpg"
+    },
+    {
+        "merged": "com.stocksnap.app-merged_res-80:/drawable_dashboard_header.png.flat",
+        "source": "com.stocksnap.app-main-82:/drawable/dashboard_header.png"
+    }
+]

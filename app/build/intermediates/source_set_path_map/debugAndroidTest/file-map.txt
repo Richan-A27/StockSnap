@@ -1,0 +1,4 @@
+com.stocksnap.test.app-androidTest-0 /Users/richan_27/Desktop/app/StockSnap/app/build/generated/res/resValues/androidTest/debug
+com.stocksnap.test.app-mergeDebugAndroidTestResources-1 /Users/richan_27/Desktop/app/StockSnap/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
+com.stocksnap.test.app-mergeDebugAndroidTestResources-2 /Users/richan_27/Desktop/app/StockSnap/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
+com.stocksnap.test.app-merged_res-3 /Users/richan_27/Desktop/app/StockSnap/app/build/intermediates/merged_res/debugAndroidTest
