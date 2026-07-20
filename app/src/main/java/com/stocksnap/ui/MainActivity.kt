@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.NavigationBar
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Inventory
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -57,6 +59,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var migrationUtility: MigrationUtility
+
+    @Inject
+    lateinit var networkConnectivityObserver: com.stocksnap.util.NetworkConnectivityObserver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,9 +97,36 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            val isConnected by networkConnectivityObserver.networkStatus.collectAsState(initial = true)
+
             StockSnapTheme {
                 Surface {
-                    if (showSplash) {
+                    if (!isConnected) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = androidx.compose.ui.Alignment.Center
+                        ) {
+                            androidx.compose.foundation.layout.Column(
+                                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = androidx.compose.material.icons.Icons.Rounded.Warning,
+                                    contentDescription = "No Internet",
+                                    modifier = Modifier.padding(bottom = 16.dp),
+                                    tint = androidx.compose.material3.MaterialTheme.colorScheme.error
+                                )
+                                Text(
+                                    text = "No internet connection.",
+                                    style = androidx.compose.material3.MaterialTheme.typography.titleLarge
+                                )
+                                Text(
+                                    text = "Please connect to the internet to use the app.",
+                                    modifier = Modifier.padding(top = 8.dp),
+                                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    } else if (showSplash) {
                         Box(
                             modifier = Modifier.fillMaxSize()
                         ) {

@@ -145,7 +145,7 @@ fun StockSnapNavHost(
 
         composable("dashboard") {
             DashboardScreen(
-                onNewScan = { navController.navigate("scan") },
+                onBarcodeScan = { navController.navigate("scan") },
                 onArrivalClick = { arrivalId -> navController.navigate("details/$arrivalId") },
                 onViewAllDeliveries = { navController.navigate("history") },
                 onViewAllActivity = { navController.navigate("activityLogs") }
@@ -168,6 +168,7 @@ fun StockSnapNavHost(
                 }
             })
         }
+
         composable("history") {
             HistoryScreen(onArrivalClick = { arrivalId -> navController.navigate("details/$arrivalId") })
         }

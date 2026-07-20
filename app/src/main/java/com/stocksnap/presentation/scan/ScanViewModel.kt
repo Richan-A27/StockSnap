@@ -25,6 +25,18 @@ sealed class CatalogLookupResult {
     object NotFound : CatalogLookupResult()
 }
 
+sealed class DuplicateArrivalMergeState {
+    object Idle : DuplicateArrivalMergeState()
+    data class PendingMerge(
+        val existingArrival: Arrival,
+        val newQuantity: Int,
+        val newSupplier: String?,
+        val onSaved: () -> Unit,
+        val isNewProduct: Boolean,
+        val newProduct: Product? = null
+    ) : DuplicateArrivalMergeState()
+}
+
 @HiltViewModel
 class ScanViewModel @Inject constructor(
     private val repository: ProductRepository,
@@ -33,6 +45,9 @@ class ScanViewModel @Inject constructor(
 
     private val _lookupResult = MutableStateFlow<CatalogLookupResult>(CatalogLookupResult.Idle)
     val lookupResult: StateFlow<CatalogLookupResult> = _lookupResult
+
+    private val _mergeState = MutableStateFlow<DuplicateArrivalMergeState>(DuplicateArrivalMergeState.Idle)
+    val mergeState: StateFlow<DuplicateArrivalMergeState> = _mergeState
 
     private val _scanError = MutableStateFlow<String?>(null)
     val scanError: StateFlow<String?> = _scanError
@@ -113,19 +128,31 @@ class ScanViewModel @Inject constructor(
         onSaved: () -> Unit
     ) {
         viewModelScope.launch {
-            val arrival = Arrival(
-                arrivalId = UUID.randomUUID().toString(),
-                barcode = product.barcode,
-                productName = product.name,
-                mrp = mrp,
-                quantityReceived = quantity,
-                status = ProductStatus.PENDING,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis(),
-                optionalSupplierName = supplierName
-            )
-            repository.insertArrival(arrival)
-            onSaved()
+            val todayArrivals = repository.getArrivalsForToday(product.barcode, mrp)
+            if (todayArrivals.isNotEmpty()) {
+                val existingArrival = todayArrivals.first()
+                _mergeState.value = DuplicateArrivalMergeState.PendingMerge(
+                    existingArrival = existingArrival,
+                    newQuantity = quantity,
+                    newSupplier = supplierName,
+                    onSaved = onSaved,
+                    isNewProduct = false
+                )
+            } else {
+                val arrival = Arrival(
+                    arrivalId = UUID.randomUUID().toString(),
+                    barcode = product.barcode,
+                    productName = product.name,
+                    mrp = mrp,
+                    quantityReceived = quantity,
+                    status = ProductStatus.PENDING,
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis(),
+                    optionalSupplierName = supplierName
+                )
+                repository.insertArrival(arrival)
+                onSaved()
+            }
         }
     }
 
@@ -172,7 +199,6 @@ class ScanViewModel @Inject constructor(
         viewModelScope.launch {
             val thumb = ThumbnailUtils.generateThumbnail(context, frontPath)
             
-            // 1. Create and Save Product Catalog
             val product = Product(
                 name = name,
                 barcode = scannedBarcode,
@@ -183,23 +209,87 @@ class ScanViewModel @Inject constructor(
                 weight = weight,
                 code = code
             )
-            repository.insertProduct(product)
 
-            // 2. Create and Save Arrival Record
-            val arrival = Arrival(
-                arrivalId = UUID.randomUUID().toString(),
-                barcode = scannedBarcode,
-                productName = name,
-                mrp = mrp,
-                quantityReceived = quantity,
-                status = ProductStatus.PENDING,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis(),
-                optionalSupplierName = supplierName
-            )
-            repository.insertArrival(arrival)
+            val todayArrivals = repository.getArrivalsForToday(scannedBarcode, mrp)
+            if (todayArrivals.isNotEmpty()) {
+                val existingArrival = todayArrivals.first()
+                _mergeState.value = DuplicateArrivalMergeState.PendingMerge(
+                    existingArrival = existingArrival,
+                    newQuantity = quantity,
+                    newSupplier = supplierName,
+                    onSaved = onSaved,
+                    isNewProduct = true,
+                    newProduct = product
+                )
+            } else {
+                repository.insertProduct(product)
+                val arrival = Arrival(
+                    arrivalId = UUID.randomUUID().toString(),
+                    barcode = scannedBarcode,
+                    productName = name,
+                    mrp = mrp,
+                    quantityReceived = quantity,
+                    status = ProductStatus.PENDING,
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis(),
+                    optionalSupplierName = supplierName
+                )
+                repository.insertArrival(arrival)
+                onSaved()
+            }
+        }
+    }
 
-            onSaved()
+    fun confirmArrivalMerge(merge: Boolean) {
+        val currentState = _mergeState.value as? DuplicateArrivalMergeState.PendingMerge ?: return
+        viewModelScope.launch {
+            if (currentState.isNewProduct && currentState.newProduct != null) {
+                repository.insertProduct(currentState.newProduct)
+            }
+
+            if (merge) {
+                val oldQuantity = currentState.existingArrival.quantityReceived
+                val newQty = oldQuantity + currentState.newQuantity
+                
+                // Concatenate suppliers
+                val existingSupplier = currentState.existingArrival.optionalSupplierName
+                val addedSupplier = currentState.newSupplier
+                val mergedSupplier = if (!existingSupplier.isNullOrEmpty() && !addedSupplier.isNullOrEmpty() && existingSupplier != addedSupplier) {
+                    "$existingSupplier, $addedSupplier"
+                } else if (!existingSupplier.isNullOrEmpty()) {
+                    existingSupplier
+                } else {
+                    addedSupplier
+                }
+
+                val updatedArrival = currentState.existingArrival.copy(
+                    quantityReceived = newQty,
+                    optionalSupplierName = mergedSupplier,
+                    updatedAt = System.currentTimeMillis()
+                )
+                repository.updateArrival(updatedArrival)
+                repository.logActivityFeed(
+                    actionType = "PRODUCT_QUANTITY_MERGED",
+                    barcode = updatedArrival.barcode,
+                    productName = updatedArrival.productName
+                )
+            } else {
+                val newArrival = Arrival(
+                    arrivalId = UUID.randomUUID().toString(),
+                    barcode = currentState.existingArrival.barcode,
+                    productName = currentState.existingArrival.productName,
+                    mrp = currentState.existingArrival.mrp,
+                    quantityReceived = currentState.newQuantity,
+                    status = ProductStatus.PENDING,
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis(),
+                    optionalSupplierName = currentState.newSupplier
+                )
+                repository.insertArrival(newArrival)
+            }
+            
+            _mergeState.value = DuplicateArrivalMergeState.Idle
+            currentState.onSaved()
         }
     }
 
@@ -211,5 +301,6 @@ class ScanViewModel @Inject constructor(
         _ocrProduct.value = null
         _ocrMrp.value = 0.0
         _scanError.value = null
+        _mergeState.value = DuplicateArrivalMergeState.Idle
     }
 }

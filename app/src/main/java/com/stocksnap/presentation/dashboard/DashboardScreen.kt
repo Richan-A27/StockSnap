@@ -64,7 +64,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    onNewScan: () -> Unit = {},
+    onBarcodeScan: () -> Unit = {},
     onArrivalClick: (String) -> Unit = {},
     onViewAllDeliveries: () -> Unit = {},
     onViewAllActivity: () -> Unit = {},
@@ -240,13 +240,14 @@ fun DashboardScreen(
             }
         }
 
-        // 4. Scan Product Gradient Card Button
+        // 4. Scan Action
         item {
             ElevatedCard(
-                onClick = onNewScan,
+                onClick = onBarcodeScan,
                 modifier = Modifier
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.elevatedCardColors(containerColor = Color.Transparent)
             ) {
                 Row(
@@ -257,13 +258,12 @@ fun DashboardScreen(
                                 colors = listOf(Color(0xFF007A48), Color(0xFF005330))
                             )
                         )
-                        .padding(16.dp),
+                        .padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // White viewfinder icon
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
+                            .size(56.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .background(Color.White),
                         contentAlignment = Alignment.Center
@@ -272,26 +272,30 @@ fun DashboardScreen(
                             imageVector = Icons.Rounded.QrCodeScanner,
                             contentDescription = null,
                             tint = Color(0xFF007A48),
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
-
                     Spacer(modifier = Modifier.width(16.dp))
-
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "+ Scan Product",
+                            text = "Scan Product",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Scan barcode to add or update",
+                            text = "Register new stock or log arrivals instantly",
                             fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = Color.White.copy(alpha = 0.85f),
+                            lineHeight = 16.sp
                         )
                     }
+                    Icon(
+                        imageVector = Icons.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
         }

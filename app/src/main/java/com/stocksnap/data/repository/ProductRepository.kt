@@ -23,6 +23,7 @@ interface ProductRepository {
     suspend fun getArrivalByArrivalId(arrivalId: String): Arrival?
     suspend fun getAllArrivals(): List<Arrival>
     suspend fun getArrivalsByDay(day: Long): List<Arrival>
+    suspend fun getArrivalsForToday(barcode: String, mrp: Double): List<Arrival>
     
     // Scan Sessions (local operational history)
     suspend fun getAllScanSessions(): List<ScanSession>

@@ -32,6 +32,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.stocksnap.R
+import android.content.pm.PackageManager
+import java.security.MessageDigest
 
 @Composable
 fun LoginScreen(
@@ -52,8 +54,34 @@ fun LoginScreen(
             if (account != null) {
                 viewModel.signInWithGoogle(account, onLoginSuccess)
             }
+        } catch (e: ApiException) {
+            e.printStackTrace()
+            val clientId = context.getString(R.string.default_web_client_id)
+            viewModel.setError("Google Sign-In failed (Code ${e.statusCode}). ClientID: ${clientId.take(15)}...")
         } catch (e: Exception) {
             e.printStackTrace()
+            viewModel.setError("Sign-In error: ${e.localizedMessage}")
+        }
+    }
+
+    // Calculate SHA-1 for debugging Code 10
+    val sha1 = remember {
+        try {
+            val info = context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.GET_SIGNATURES
+            )
+            val signatures = info.signatures
+            if (signatures != null && signatures.isNotEmpty()) {
+                val md = MessageDigest.getInstance("SHA-1")
+                md.update(signatures[0].toByteArray())
+                val digest = md.digest()
+                digest.joinToString("") { "%02x".format(it) }
+            } else {
+                "No Signature"
+            }
+        } catch (e: Exception) {
+            "Error computing SHA-1"
         }
     }
 
@@ -244,12 +272,17 @@ fun LoginScreen(
                     // Styled Pill Google Sign-In Button
                     Button(
                         onClick = {
+                            val clientId = context.getString(R.string.default_web_client_id)
                             val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
-                                .requestIdToken(context.getString(R.string.default_web_client_id))
+                                .requestIdToken(clientId)
                                 .requestEmail()
                                 .build()
                             val signInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
-                            launcher.launch(signInClient.signInIntent)
+                            
+                            // Sign out to clear any cached states before trying to sign in again
+                            signInClient.signOut().addOnCompleteListener {
+                                launcher.launch(signInClient.signInIntent)
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                         shape = RoundedCornerShape(26.dp),
@@ -368,6 +401,15 @@ fun LoginScreen(
                         fontSize = 11.sp,
                         color = Color.White.copy(alpha = 0.35f),
                         fontWeight = FontWeight.Medium
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    Text(
+                        text = "App SHA-1: $sha1",
+                        fontSize = 9.sp,
+                        color = Color.White.copy(alpha = 0.5f),
+                        textAlign = TextAlign.Center
                     )
                 }
             }

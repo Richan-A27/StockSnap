@@ -42,6 +42,7 @@ fun ScanScreen(
 ) {
     val context = LocalContext.current
     val lookupResult by viewModel.lookupResult.collectAsState()
+    val mergeState by viewModel.mergeState.collectAsState()
     val ocrProduct by viewModel.ocrProduct.collectAsState()
     val ocrMrp by viewModel.ocrMrp.collectAsState()
     val scanError by viewModel.scanError.collectAsState()
@@ -123,6 +124,34 @@ fun ScanScreen(
             confirmButton = {
                 TextButton(onClick = { showErrorDialog = false }) {
                     Text("OK")
+                }
+            }
+        )
+    }
+
+    if (mergeState is DuplicateArrivalMergeState.PendingMerge) {
+        val pending = mergeState as DuplicateArrivalMergeState.PendingMerge
+        AlertDialog(
+            onDismissRequest = { viewModel.confirmArrivalMerge(false) },
+            title = { Text("Duplicate Arrival", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("This product already exists in today's deliveries.")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Existing Quantity: ${pending.existingArrival.quantityReceived}")
+                    Text("New Quantity: ${pending.newQuantity}")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("What would you like to do?")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmArrivalMerge(true) }) {
+                    Text("Merge Quantities")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.confirmArrivalMerge(false) }) {
+                    Text("Create Separate Entry")
                 }
             }
         )

@@ -66,6 +66,10 @@ interface ProductDao {
     @Query("SELECT * FROM arrivals WHERE DATE(createdAt / 1000, 'unixepoch') = DATE(:day / 1000, 'unixepoch') ORDER BY createdAt DESC")
     suspend fun getArrivalsByDay(day: Long): List<Arrival>
 
+    @Query("SELECT * FROM arrivals WHERE barcode = :barcode AND mrp = :mrp AND createdAt >= :startOfDay AND createdAt <= :endOfDay ORDER BY createdAt DESC")
+    suspend fun getArrivalsForToday(barcode: String, mrp: Double, startOfDay: Long, endOfDay: Long): List<Arrival>
+
+
     @Query("SELECT COUNT(*) FROM arrivals WHERE status = :status")
     suspend fun countArrivalsByStatus(status: ProductStatus): Int
 

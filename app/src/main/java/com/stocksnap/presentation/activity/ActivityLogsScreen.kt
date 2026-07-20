@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.rounded.CallMerge
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -197,6 +198,7 @@ fun ActivityLogCard(log: ActivityLog) {
                     "edit" -> Icons.Rounded.Edit
                     "plus" -> Icons.Rounded.Add
                     "undo" -> Icons.Rounded.Undo
+                    "merge" -> Icons.Rounded.CallMerge
                     else -> Icons.Rounded.Inventory
                 }
                 Icon(
@@ -243,6 +245,8 @@ fun ActivityLogCard(log: ActivityLog) {
 
 private fun getActivityIconAndColors(actionType: String): Triple<Color, String, Color> {
     return when {
+        actionType.contains("MERGED") ->
+            Triple(Color(0xFFE0F7FA), "merge", Color(0xFF0097A7))
         actionType.contains("APPROVED") || actionType.contains("ENABLED") -> 
             Triple(Color(0xFFE8F5E9), "check", Color(0xFF2E7D32))
         actionType.contains("DISABLED") || actionType.contains("REJECTED") -> 
@@ -262,6 +266,7 @@ private fun getActivityIconAndColors(actionType: String): Triple<Color, String, 
 
 private fun getActionDescription(log: ActivityLog): String {
     return when (log.actionType) {
+        "PRODUCT_QUANTITY_MERGED" -> "merged quantities for ${log.productName}"
         "USER_APPROVED" -> "approved a user account"
         "USER_REJECTED" -> "rejected a user account"
         "USER_DISABLED" -> "disabled a user account"

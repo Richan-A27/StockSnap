@@ -80,5 +80,9 @@ object AppModule {
         return ProductRepositoryImpl(dao, firebaseAuth, firestore, storage, workManager)
     }
 
-    // Drive and Backup managers removed
+    @Provides
+    @Singleton
+    fun provideNetworkConnectivityObserver(@ApplicationContext context: Context): com.stocksnap.util.NetworkConnectivityObserver {
+        return com.stocksnap.util.NetworkConnectivityObserver(context)
+    }
 }
