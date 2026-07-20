@@ -1,10 +1,13 @@
 package com.stocksnap.presentation.details
 
+import android.graphics.Bitmap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stocksnap.data.database.Product
+import com.stocksnap.data.model.Arrival
 import com.stocksnap.data.repository.ProductRepository
+import com.stocksnap.domain.model.ProductStatus
 import com.stocksnap.qr.QRGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,38 +21,55 @@ class DetailsViewModel @Inject constructor(
     private val repository: ProductRepository
 ) : ViewModel() {
 
+    private val _arrival = MutableStateFlow<Arrival?>(null)
+    val arrival: StateFlow<Arrival?> = _arrival
+
     private val _product = MutableStateFlow<Product?>(null)
     val product: StateFlow<Product?> = _product
-    private val _qrBitmap = MutableStateFlow<android.graphics.Bitmap?>(null)
-    val qrBitmap: StateFlow<android.graphics.Bitmap?> = _qrBitmap
+
+    private val _qrBitmap = MutableStateFlow<Bitmap?>(null)
+    val qrBitmap: StateFlow<Bitmap?> = _qrBitmap
 
     init {
-        val id = savedStateHandle.get<Long>("productId") ?: 0L
-        if (id > 0L) load(id)
+        val arrivalId = savedStateHandle.get<String>("arrivalId") ?: ""
+        if (arrivalId.isNotEmpty()) {
+            load(arrivalId)
+        }
     }
 
-    private fun load(id: Long) {
+    private fun load(arrivalId: String) {
         viewModelScope.launch {
-            val p = repository.getById(id) ?: return@launch
-            _product.value = p
-            if (p.barcode.isNotEmpty()) {
+            val arr = repository.getArrivalByArrivalId(arrivalId) ?: return@launch
+            _arrival.value = arr
+            
+            val prod = repository.getProductByBarcode(arr.barcode)
+            _product.value = prod
+            
+            if (arr.barcode.isNotEmpty()) {
                 try {
-                    _qrBitmap.value = QRGenerator.generateBitmap(p.barcode, 256)
-                } catch (_: Exception) {
-                }
+                    _qrBitmap.value = QRGenerator.generateBitmap(arr.barcode, 256)
+                } catch (_: Exception) {}
             }
         }
     }
 
-    fun toggleStatus() {
-        val p = _product.value ?: return
-        val updated = p.copy(
-            status = if (p.status == com.stocksnap.domain.model.ProductStatus.PENDING) com.stocksnap.domain.model.ProductStatus.UPDATED else com.stocksnap.domain.model.ProductStatus.PENDING,
+    fun toggleProductStatus() {
+        val arr = _arrival.value ?: return
+        val updated = arr.copy(
+            status = if (arr.status == ProductStatus.PENDING) ProductStatus.UPDATED else ProductStatus.PENDING,
             updatedAt = System.currentTimeMillis()
         )
         viewModelScope.launch {
-            repository.update(updated)
-            _product.value = updated
+            repository.updateArrival(updated)
+            _arrival.value = updated
+        }
+    }
+
+    fun deleteArrival(onDeleted: () -> Unit) {
+        val arr = _arrival.value ?: return
+        viewModelScope.launch {
+            repository.deleteArrival(arr.id)
+            onDeleted()
         }
     }
 }

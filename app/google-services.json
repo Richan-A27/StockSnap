@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "541149330304",
+    "project_id": "stocksnap-1bf09",
+    "storage_bucket": "stocksnap-1bf09.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:541149330304:android:8cafe8cca3e8794191df65",
+        "android_client_info": {
+          "package_name": "com.stocksnap"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "541149330304-06q495and7f62p52l9g10e5cs1ther73.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.stocksnap",
+            "certificate_hash": "7327541ca2fb1d922e00d9a734749f4fa660d612"
+          }
+        },
+        {
+          "client_id": "541149330304-bi3oiur2ihap561uqg4ggkk61q817lti.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBW8kepibfyRgomEgIRa_KMTAlj9hXvukg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "541149330304-bi3oiur2ihap561uqg4ggkk61q817lti.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

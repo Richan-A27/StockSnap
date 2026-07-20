@@ -5,6 +5,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.stocksnap.data.database.Product
@@ -12,6 +14,8 @@ import kotlinx.coroutines.tasks.await
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+
+class QrCodeDetectedException(message: String) : Exception(message)
 
 @Singleton
 class MLKitProcessor @Inject constructor(@ApplicationContext private val context: Context) {
@@ -24,25 +28,19 @@ class MLKitProcessor @Inject constructor(@ApplicationContext private val context
         }
 
         val barcode = try {
-            scanBarcode(product.barcodeImagePath) ?: product.barcode
+            scanBarcodeAndFilter(product.barcodeImagePath) ?: product.barcode
         } catch (e: Exception) {
             product.barcode
         }
 
-        val mrpResult = try {
-            recognizeTextResult(product.mrpImagePath)
-        } catch (e: Exception) {
-            null
-        }
-
         val (name, brand) = extractNameAndBrand(frontResult)
-        val mrp = extractMrp(mrpResult)
+        val weight = extractWeight(frontResult)
 
         return product.copy(
             name = name ?: product.name,
             barcode = barcode.ifEmpty { product.barcode },
-            mrp = mrp ?: product.mrp,
-            brand = brand ?: product.brand
+            brand = brand ?: product.brand,
+            weight = weight ?: product.weight
         )
     }
 
@@ -55,15 +53,78 @@ class MLKitProcessor @Inject constructor(@ApplicationContext private val context
         return recognizer.process(image).await()
     }
 
-    private suspend fun scanBarcode(filePath: String): String? {
+    suspend fun scanBarcodeAndFilter(filePath: String): String? {
         val file = File(filePath)
         if (!file.exists()) return null
         val uri = Uri.fromFile(file)
         val image = InputImage.fromFilePath(context, uri)
-        val scanner = BarcodeScanning.getClient()
+
+        val options = BarcodeScannerOptions.Builder()
+            .setBarcodeFormats(
+                Barcode.FORMAT_EAN_13,
+                Barcode.FORMAT_EAN_8,
+                Barcode.FORMAT_UPC_A,
+                Barcode.FORMAT_UPC_E,
+                Barcode.FORMAT_CODE_128,
+                Barcode.FORMAT_QR_CODE,
+                Barcode.FORMAT_DATA_MATRIX,
+                Barcode.FORMAT_AZTEC,
+                Barcode.FORMAT_PDF417
+            )
+            .build()
+        val scanner = BarcodeScanning.getClient(options)
         val barcodes = scanner.process(image).await()
-        if (barcodes.isNotEmpty()) return barcodes[0].rawValue
+
+        if (barcodes.isEmpty()) return null
+
+        // Log all detected formats and values
+        for (barcode in barcodes) {
+            val formatName = getFormatName(barcode.format)
+            val valStr = barcode.rawValue ?: ""
+            android.util.Log.i("MLKitProcessor", "Detected Format: $formatName, Detected Value: $valStr")
+        }
+
+        // Prioritize allowed formats
+        val allowedFormats = listOf(
+            Barcode.FORMAT_EAN_13,
+            Barcode.FORMAT_EAN_8,
+            Barcode.FORMAT_UPC_A,
+            Barcode.FORMAT_UPC_E,
+            Barcode.FORMAT_CODE_128
+        )
+        val allowedBarcode = barcodes.firstOrNull { it.format in allowedFormats }
+        if (allowedBarcode != null) {
+            return allowedBarcode.rawValue
+        }
+
+        // If no allowed formats were found, check if ignored formats are present
+        val ignoredFormats = listOf(
+            Barcode.FORMAT_QR_CODE,
+            Barcode.FORMAT_DATA_MATRIX,
+            Barcode.FORMAT_AZTEC,
+            Barcode.FORMAT_PDF417
+        )
+        val ignoredBarcode = barcodes.firstOrNull { it.format in ignoredFormats }
+        if (ignoredBarcode != null) {
+            throw QrCodeDetectedException("Please scan the product barcode.")
+        }
+
         return null
+    }
+
+    private fun getFormatName(format: Int): String {
+        return when (format) {
+            Barcode.FORMAT_EAN_13 -> "EAN_13"
+            Barcode.FORMAT_EAN_8 -> "EAN_8"
+            Barcode.FORMAT_UPC_A -> "UPC_A"
+            Barcode.FORMAT_UPC_E -> "UPC_E"
+            Barcode.FORMAT_CODE_128 -> "CODE_128"
+            Barcode.FORMAT_QR_CODE -> "QR_CODE"
+            Barcode.FORMAT_DATA_MATRIX -> "DATA_MATRIX"
+            Barcode.FORMAT_AZTEC -> "AZTEC"
+            Barcode.FORMAT_PDF417 -> "PDF417"
+            else -> "UNKNOWN ($format)"
+        }
     }
 
     private fun extractNameAndBrand(textResult: com.google.mlkit.vision.text.Text?): Pair<String?, String?> {
@@ -73,7 +134,6 @@ class MLKitProcessor @Inject constructor(@ApplicationContext private val context
         if (blocks.isEmpty()) return null to null
 
         // Heuristic: Sort blocks by bounding box area (larger text usually = name)
-        // Also look at top blocks (usually brand)
         val sortedByArea = blocks.sortedByDescending { it.boundingBox?.let { b -> b.width() * b.height() } ?: 0 }
         
         // Brand is often at the top or first block
@@ -83,43 +143,22 @@ class MLKitProcessor @Inject constructor(@ApplicationContext private val context
         val brand = if (topBlock != null && topBlock != sortedByArea.firstOrNull()) {
             topBlock.text.lines().firstOrNull()
         } else {
-            // if top block is the name, look for other small blocks at the top
             blocks.filter { it != sortedByArea.firstOrNull() }
                   .minByOrNull { it.boundingBox?.top ?: Int.MAX_VALUE }
                   ?.text?.lines()?.firstOrNull()
         }
 
-        // Clean up common brand sentences
         val brandClean = if (brand?.contains(" ", ignoreCase = true) == true && brand.length > 20) null else brand
 
         return name to brandClean
     }
 
-
-    private fun extractMrp(textResult: com.google.mlkit.vision.text.Text?): Double? {
+    private fun extractWeight(textResult: com.google.mlkit.vision.text.Text?): String? {
         if (textResult == null) return null
         val text = textResult.text
         
-        // Pattern 1: MRP followed by number
-        // Pattern 2: ₹ or Rs followed by number
-        // Pattern 3: Number followed by MRP
-        
-        val mrpRegex = "(?i)(?:MRP|M\\.R\\.P\\.?|RS\\.?|₹)\\s*(?:[:;,.\\-]?\\s*)?(\\d+[.,]?\\d*)".toRegex()
-        val match = mrpRegex.find(text)
-        if (match != null) {
-            return match.groupValues[1].replace(",", "").toDoubleOrNull()
-        }
-        
-        // Fallback: search for any number near currency symbols
-        val priceRegex = "(?:₹|Rs|MRP)\\s*(\\d+[.,]?\\d*)".toRegex(RegexOption.IGNORE_CASE)
-        val fallbackMatch = priceRegex.find(text)
-        if (fallbackMatch != null) {
-            return fallbackMatch.groupValues[1].replace(",", "").toDoubleOrNull()
-        }
-
-        // Final fallback: first number with decimals that looks like a price (longer than 2 digits usually)
-        val simplePriceRegex = "(\\d+[.,]\\d{2})".toRegex()
-        val simpleMatch = simplePriceRegex.find(text)
-        return simpleMatch?.groupValues?.get(1)?.replace(",", "")?.toDoubleOrNull()
+        val weightRegex = "(?i)\\b(\\d+(?:\\.\\d+)?)\\s*(g|kg|ml|l)\\b".toRegex()
+        val match = weightRegex.find(text)
+        return match?.value?.replace(" ", "")?.replace("l", "L")?.replace("Lg", "kg")
     }
 }

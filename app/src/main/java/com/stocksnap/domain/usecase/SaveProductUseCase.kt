@@ -8,6 +8,6 @@ class SaveProductUseCase @Inject constructor(
     private val repository: ProductRepository
 ) {
     suspend operator fun invoke(product: Product): Long {
-        return repository.insert(product)
+        return repository.insertProduct(product)
     }
 }

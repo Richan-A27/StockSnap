@@ -2,7 +2,14 @@ package com.stocksnap.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.work.WorkManager
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.stocksnap.data.database.AppDatabase
+import com.stocksnap.data.database.ProductDao
+import com.stocksnap.data.repository.AuthRepository
+import com.stocksnap.data.repository.AuthRepositoryImpl
 import com.stocksnap.data.repository.ProductRepository
 import com.stocksnap.data.repository.ProductRepositoryImpl
 import dagger.Module
@@ -10,9 +17,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
-import com.stocksnap.backup.BackupManager
-import com.stocksnap.backup.DriveService
-import com.stocksnap.backup.RestoreManager
 import javax.inject.Singleton
 
 @Module
@@ -23,40 +27,58 @@ object AppModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
         return Room.databaseBuilder(context, AppDatabase::class.java, "stocksnap-db")
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5,
+                AppDatabase.MIGRATION_5_6
+            )
             .fallbackToDestructiveMigration()
             .build()
     }
 
     @Provides
-    @Singleton
-    fun provideProductRepository(db: AppDatabase): ProductRepository {
-        return ProductRepositoryImpl(db.productDao())
+    fun provideProductDao(db: AppDatabase): ProductDao {
+        return db.productDao()
     }
 
     @Provides
     @Singleton
-    fun provideDriveService(@ApplicationContext context: Context): DriveService {
-        return DriveService(context)
+    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFirebaseFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFirebaseStorage(): FirebaseStorage = FirebaseStorage.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideWorkManager(@ApplicationContext context: Context): WorkManager =
+        WorkManager.getInstance(context)
+
+    @Provides
+    @Singleton
+    fun provideAuthRepository(
+        firebaseAuth: FirebaseAuth,
+        firestore: FirebaseFirestore
+    ): AuthRepository {
+        return AuthRepositoryImpl(firebaseAuth, firestore)
     }
 
     @Provides
     @Singleton
-    fun provideBackupManager(
-        @ApplicationContext context: Context,
-        db: AppDatabase,
-        driveService: DriveService
-    ): BackupManager {
-        return BackupManager(context, db, driveService)
+    fun provideProductRepository(
+        dao: ProductDao,
+        firebaseAuth: FirebaseAuth,
+        firestore: FirebaseFirestore,
+        storage: FirebaseStorage,
+        workManager: WorkManager
+    ): ProductRepository {
+        return ProductRepositoryImpl(dao, firebaseAuth, firestore, storage, workManager)
     }
 
-    @Provides
-    @Singleton
-    fun provideRestoreManager(
-        @ApplicationContext context: Context,
-        db: AppDatabase,
-        driveService: DriveService
-    ): RestoreManager {
-        return RestoreManager(context, db, driveService)
-    }
+    // Drive and Backup managers removed
 }

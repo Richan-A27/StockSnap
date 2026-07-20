@@ -31,7 +31,7 @@ class ReviewViewModel @Inject constructor(
 
     private fun loadProduct(id: Long) {
         viewModelScope.launch {
-            val p = repository.getById(id) ?: return@launch
+            val p = repository.getProductById(id) ?: return@launch
             // process images with ML Kit to extract fields
             val processed = try {
                 mlKitProcessor.processProductImages(p)
@@ -41,7 +41,7 @@ class ReviewViewModel @Inject constructor(
             _product.value = processed
             // detect previous MRP for same barcode (if any)
             if (processed.barcode.isNotEmpty()) {
-                val existing = repository.findByBarcode(processed.barcode)
+                val existing = repository.getProductByBarcode(processed.barcode)
                 if (existing != null && existing.id != processed.id) {
                     _previousMrp.value = existing.mrp
                 }
@@ -51,7 +51,7 @@ class ReviewViewModel @Inject constructor(
 
     fun updateProduct(updated: Product) {
         viewModelScope.launch {
-            repository.update(updated)
+            repository.updateProduct(updated)
             _product.value = updated
         }
     }
