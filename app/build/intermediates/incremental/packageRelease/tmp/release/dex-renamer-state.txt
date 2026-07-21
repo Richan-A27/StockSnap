@@ -1,0 +1,13 @@
+#Tue Jul 21 01:47:06 IST 2026
+base.0=/Users/richan_27/Documents/StockSnap/app/build/intermediates/dex/release/mergeDexRelease/classes.dex
+base.1=/Users/richan_27/Documents/StockSnap/app/build/intermediates/dex/release/mergeDexRelease/classes2.dex
+base.2=/Users/richan_27/Documents/StockSnap/app/build/intermediates/dex/release/mergeDexRelease/classes3.dex
+base.3=/Users/richan_27/Documents/StockSnap/app/build/intermediates/dex/release/mergeDexRelease/classes4.dex
+path.0=classes.dex
+path.1=classes2.dex
+path.2=classes3.dex
+path.3=classes4.dex
+renamed.0=classes.dex
+renamed.1=classes2.dex
+renamed.2=classes3.dex
+renamed.3=classes4.dex

@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.stocksnap.app-merged_res-81:/drawable_loading_page_image.png.flat",
+        "source": "com.stocksnap.app-main-82:/drawable/loading_page_image.png"
+    },
+    {
+        "merged": "com.stocksnap.app-merged_res-81:/drawable_app_logo.jpg.flat",
+        "source": "com.stocksnap.app-main-82:/drawable/app_logo.jpg"
+    },
+    {
+        "merged": "com.stocksnap.app-merged_res-81:/drawable_google_sign_in_page_design.png.flat",
+        "source": "com.stocksnap.app-main-82:/drawable/google_sign_in_page_design.png"
+    },
+    {
+        "merged": "com.stocksnap.app-merged_res-81:/drawable_dashboard_header.png.flat",
+        "source": "com.stocksnap.app-main-82:/drawable/dashboard_header.png"
+    }
+]

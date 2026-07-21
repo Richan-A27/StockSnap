@@ -121,6 +121,10 @@ class ProductRepositoryImpl @Inject constructor(
         return dao.getAllProducts()
     }
 
+    override fun getAllProductsFlow(): kotlinx.coroutines.flow.Flow<List<Product>> {
+        return dao.getAllProductsFlow()
+    }
+
 
     // ARRIVALS DELIVERIES
     override suspend fun insertArrival(arrival: Arrival): Long {
@@ -179,6 +183,10 @@ class ProductRepositoryImpl @Inject constructor(
 
     override suspend fun getAllArrivals(): List<Arrival> {
         return dao.getAllArrivals()
+    }
+
+    override fun getAllArrivalsFlow(): kotlinx.coroutines.flow.Flow<List<Arrival>> {
+        return dao.getAllArrivalsFlow()
     }
 
     override suspend fun getArrivalsByDay(day: Long): List<Arrival> {
@@ -242,6 +250,10 @@ class ProductRepositoryImpl @Inject constructor(
 
     override suspend fun getLatestActivityLogs(limit: Int): List<ActivityLog> {
         return dao.getLatestActivityLogs(limit)
+    }
+
+    override fun getLatestActivityLogsFlow(limit: Int): kotlinx.coroutines.flow.Flow<List<ActivityLog>> {
+        return dao.getLatestActivityLogsFlow(limit)
     }
 
 

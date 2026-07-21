@@ -1,4 +1,0 @@
-#Wed Jun 17 23:05:00 IST 2026
-base.0=/Users/richan_27/Desktop/app/StockSnap/app/build/intermediates/dex/debugAndroidTest/mergeProjectDexDebugAndroidTest/0/classes.dex
-path.0=0/classes.dex
-renamed.0=classes.dex

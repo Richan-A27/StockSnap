@@ -16,25 +16,33 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.stocksnap.domain.model.ProductStatus
+import com.stocksnap.presentation.components.GlassButton
+import com.stocksnap.presentation.components.GlassCard
+import com.stocksnap.ui.theme.AppBackground
+import com.stocksnap.ui.theme.PrimaryGreen
+import com.stocksnap.ui.theme.StatusDanger
+import com.stocksnap.ui.theme.StatusWarning
+import com.stocksnap.ui.theme.TextPrimary
+import com.stocksnap.ui.theme.TextSecondary
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.ContentCopy
@@ -73,18 +81,32 @@ fun DetailsScreen(
                         viewModel.deleteArrival(onBack)
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = StatusDanger)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text("Cancel", color = TextPrimary)
                 }
-            }
+            },
+            containerColor = AppBackground,
+            titleContentColor = TextPrimary,
+            textContentColor = TextSecondary
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF6F6F6))) {
+    Box(modifier = Modifier.fillMaxSize().background(AppBackground)) {
+        // Ambient glass background blurs
+        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize().blur(80.dp)) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(PrimaryGreen.copy(alpha = 0.12f), Color.Transparent)
+                ),
+                radius = size.width,
+                center = Offset(size.width, size.height * 0.2f)
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -113,23 +135,23 @@ fun DetailsScreen(
                         .fillMaxWidth()
                         .height(90.dp)
                         .background(
-                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                            Brush.verticalGradient(
                                 colors = listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)
                             )
                         )
                 )
 
                 // Image 1/1 count pill
-                Surface(
-                    color = Color.Black.copy(alpha = 0.45f),
-                    shape = RoundedCornerShape(12.dp),
+                Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(16.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.Black.copy(alpha = 0.45f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Image,
@@ -141,7 +163,7 @@ fun DetailsScreen(
                         Text(
                             text = "1/1",
                             color = Color.White,
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -149,30 +171,26 @@ fun DetailsScreen(
             }
 
             // Title and Status
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = product.name.uppercase(Locale.getDefault()),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.Black,
-                    fontSize = 22.sp,
-                    lineHeight = 28.sp
+                    style = MaterialTheme.typography.displaySmall,
+                    color = TextPrimary
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     // Status Pill
                     val (statusBg, statusText, statusDot) = when (arrival.status) {
-                        ProductStatus.PENDING -> Triple(Color(0xFFFFF3E0), Color(0xFFE65100), Color(0xFFFF9800))
-                        ProductStatus.UPDATED -> Triple(Color(0xFFE8F5E9), Color(0xFF2E7D32), Color(0xFF4CAF50))
+                        ProductStatus.PENDING -> Triple(StatusWarning.copy(alpha = 0.15f), StatusWarning, StatusWarning)
+                        ProductStatus.UPDATED -> Triple(PrimaryGreen.copy(alpha = 0.15f), PrimaryGreen, PrimaryGreen)
                     }
-                    Surface(
-                        color = statusBg,
-                        shape = RoundedCornerShape(8.dp)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(statusBg)
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
                                     .size(6.dp)
@@ -183,7 +201,7 @@ fun DetailsScreen(
                             Text(
                                 text = arrival.status.name,
                                 color = statusText,
-                                fontSize = 11.sp,
+                                style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -195,25 +213,24 @@ fun DetailsScreen(
                         val format = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
                         "ADDED ON " + format.format(Date(arrival.createdAt)).uppercase(Locale.getDefault())
                     }
-                    Surface(
-                        color = Color(0xFFE3F2FD),
-                        shape = RoundedCornerShape(8.dp)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF5E5CE6).copy(alpha = 0.15f))
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Rounded.CalendarToday,
                                 contentDescription = null,
-                                tint = Color(0xFF1565C0),
+                                tint = Color(0xFF5E5CE6),
                                 modifier = Modifier.size(12.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = addedText,
-                                color = Color(0xFF1565C0),
-                                fontSize = 11.sp,
+                                color = Color(0xFF5E5CE6),
+                                style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -221,341 +238,292 @@ fun DetailsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            // QR + Status Action Card
+            if (product.barcode.isNotEmpty()) {
+                val qrBitmap = remember(product.barcode) {
+                    com.stocksnap.util.QrCodeGenerator.generate(product.barcode, 350)
+                }
 
-        // QR + Status Action Card (immediately visible, no scrolling needed)
-        if (product.barcode.isNotEmpty()) {
-            val qrBitmap = remember(product.barcode) {
-                com.stocksnap.util.QrCodeGenerator.generate(product.barcode, 350)
-            }
-
-            ElevatedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.Top
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)
                 ) {
-                    // Left Column — QR Code + Barcode value
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .weight(1f)
-                            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(12.dp))
-                            .background(Color(0xFFFAFAFA), RoundedCornerShape(12.dp))
-                            .padding(12.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.Top
                     ) {
-                        qrBitmap?.let { bmp ->
-                            androidx.compose.foundation.Image(
-                                bitmap = bmp.asImageBitmap(),
-                                contentDescription = "QR Code",
-                                modifier = Modifier
-                                    .size(110.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(Color.White),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = product.barcode,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.Gray
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    // Right Column — Status + Toggle Button
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(top = 12.dp)
-                    ) {
-                        Text(
-                            text = "Status",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Status chip
-                        val (statusActionBg, statusActionText, statusActionDot) = when (arrival.status) {
-                            ProductStatus.PENDING -> Triple(Color(0xFFFFF3E0), Color(0xFFE65100), Color(0xFFFF9800))
-                            ProductStatus.UPDATED -> Triple(Color(0xFFE8F5E9), Color(0xFF2E7D32), Color(0xFF4CAF50))
-                        }
-                        Surface(
-                            color = statusActionBg,
-                            shape = RoundedCornerShape(8.dp)
+                        // Left Column — QR Code + Barcode value
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .weight(1f)
+                                .border(1.dp, TextSecondary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                                .padding(12.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
-                            ) {
-                                Box(
+                            qrBitmap?.let { bmp ->
+                                androidx.compose.foundation.Image(
+                                    bitmap = bmp.asImageBitmap(),
+                                    contentDescription = "QR Code",
                                     modifier = Modifier
-                                        .size(7.dp)
-                                        .clip(CircleShape)
-                                        .background(statusActionDot)
-                                )
-                                Spacer(modifier = Modifier.width(7.dp))
-                                Text(
-                                    text = arrival.status.name,
-                                    color = statusActionText,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
+                                        .size(110.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Color.White),
+                                    contentScale = ContentScale.Fit
                                 )
                             }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = product.barcode,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
 
-                        // Toggle status button
-                        val toggleLabel = when (arrival.status) {
-                            ProductStatus.PENDING -> "Mark Updated"
-                            ProductStatus.UPDATED -> "Mark Pending"
-                        }
-                        val toggleBtnColor = when (arrival.status) {
-                            ProductStatus.PENDING -> Color(0xFF2E7D32)
-                            ProductStatus.UPDATED -> Color(0xFFE65100)
-                        }
-                        Button(
-                            onClick = { viewModel.toggleProductStatus() },
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = toggleBtnColor),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                            modifier = Modifier.fillMaxWidth()
+                        // Right Column — Status + Toggle Button
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(top = 12.dp)
                         ) {
                             Text(
+                                text = "Status",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Status chip
+                            val (statusActionBg, statusActionText, statusActionDot) = when (arrival.status) {
+                                ProductStatus.PENDING -> Triple(StatusWarning.copy(alpha = 0.15f), StatusWarning, StatusWarning)
+                                ProductStatus.UPDATED -> Triple(PrimaryGreen.copy(alpha = 0.15f), PrimaryGreen, PrimaryGreen)
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(statusActionBg)
+                                    .padding(horizontal = 14.dp, vertical = 7.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(7.dp)
+                                            .clip(CircleShape)
+                                            .background(statusActionDot)
+                                    )
+                                    Spacer(modifier = Modifier.width(7.dp))
+                                    Text(
+                                        text = arrival.status.name,
+                                        color = statusActionText,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Toggle status button
+                            val toggleLabel = when (arrival.status) {
+                                ProductStatus.PENDING -> "Mark Updated"
+                                ProductStatus.UPDATED -> "Mark Pending"
+                            }
+                            val toggleBtnColor = when (arrival.status) {
+                                ProductStatus.PENDING -> PrimaryGreen
+                                ProductStatus.UPDATED -> StatusWarning
+                            }
+                            GlassButton(
                                 text = toggleLabel,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                                onClick = { viewModel.toggleProductStatus() },
+                                containerColor = toggleBtnColor,
+                                contentColor = Color.White
                             )
                         }
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Product Metadata 2x3 Grid Card
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                // Row 1: Barcode & Code
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        GridItem(
-                            label = "Barcode",
-                            value = product.barcode,
-                            iconType = "barcode",
-                            onCopy = {
-                                copyToClipboard(context, "Barcode", product.barcode)
-                            }
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(72.dp)
-                            .background(Color(0xFFEEEEEE))
-                            .align(Alignment.CenterVertically)
-                    )
-                    Box(modifier = Modifier.weight(1f)) {
-                        GridItem(
-                            label = "Code",
-                            value = product.code.ifEmpty { "Not Set" },
-                            iconType = "code",
-                            onCopy = if (product.code.isNotEmpty()) {
-                                { copyToClipboard(context, "Code", product.code) }
-                            } else null
-                        )
-                    }
-                }
-
-                Divider(color = Color(0xFFEEEEEE))
-
-                // Row 2: Weight & MRP
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        GridItem(
-                            label = "Weight",
-                            value = product.weight.ifEmpty { "Not Set" },
-                            iconType = "weight"
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(72.dp)
-                            .background(Color(0xFFEEEEEE))
-                            .align(Alignment.CenterVertically)
-                    )
-                    Box(modifier = Modifier.weight(1f)) {
-                        GridItem(
-                            label = "MRP",
-                            value = "₹${arrival.mrp}",
-                            iconType = "mrp"
-                        )
-                    }
-                }
-
-                Divider(color = Color(0xFFEEEEEE))
-
-                // Row 3: Quantity & Status
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        GridItem(
-                            label = "Quantity",
-                            value = "${arrival.quantityReceived}",
-                            iconType = "quantity"
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(72.dp)
-                            .background(Color(0xFFEEEEEE))
-                            .align(Alignment.CenterVertically)
-                    )
-                    Box(modifier = Modifier.weight(1f)) {
-                        GridItem(
-                            label = "Status",
-                            value = arrival.status.name,
-                            iconType = "status"
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Supplier Info Card (if present)
-        arrival.optionalSupplierName?.let { supplier ->
-            ElevatedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
+            // Product Metadata Grid GlassCard
+            GlassCard(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "Supplier", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-                    Text(text = supplier, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color.Black)
-                }
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        // Added/Updated Info Card
-        val sdf = SimpleDateFormat("dd MMM yyyy hh:mm a", Locale.getDefault())
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "Metadata & Collaborators", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Text(text = "Added By", fontSize = 11.sp, color = Color.Gray)
-                        Text(text = arrival.createdByName, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text(text = sdf.format(Date(arrival.createdAt)), fontSize = 11.sp, color = Color.Gray)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // Row 1: Barcode & Code
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            GridItem(
+                                label = "Barcode",
+                                value = product.barcode,
+                                iconType = "barcode",
+                                onCopy = {
+                                    copyToClipboard(context, "Barcode", product.barcode)
+                                }
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(80.dp)
+                                .background(TextSecondary.copy(alpha = 0.1f))
+                                .align(Alignment.CenterVertically)
+                        )
+                        Box(modifier = Modifier.weight(1f)) {
+                            GridItem(
+                                label = "Code",
+                                value = product.code.ifEmpty { "Not Set" },
+                                iconType = "code",
+                                onCopy = if (product.code.isNotEmpty()) {
+                                    { copyToClipboard(context, "Code", product.code) }
+                                } else null
+                            )
+                        }
                     }
-                    if (arrival.updatedByName != null) {
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(text = "Last Updated By", fontSize = 11.sp, color = Color.Gray)
-                            Text(text = arrival.updatedByName, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                            Text(text = sdf.format(Date(arrival.updatedAt)), fontSize = 11.sp, color = Color.Gray)
+
+                    Divider(color = TextSecondary.copy(alpha = 0.1f))
+
+                    // Row 2: Weight & MRP
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            GridItem(
+                                label = "Weight",
+                                value = product.weight.ifEmpty { "Not Set" },
+                                iconType = "weight"
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(80.dp)
+                                .background(TextSecondary.copy(alpha = 0.1f))
+                                .align(Alignment.CenterVertically)
+                        )
+                        Box(modifier = Modifier.weight(1f)) {
+                            GridItem(
+                                label = "MRP",
+                                value = "₹${arrival.mrp}",
+                                iconType = "mrp"
+                            )
+                        }
+                    }
+
+                    Divider(color = TextSecondary.copy(alpha = 0.1f))
+
+                    // Row 3: Quantity & Status
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            GridItem(
+                                label = "Quantity",
+                                value = "${arrival.quantityReceived}",
+                                iconType = "quantity"
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(80.dp)
+                                .background(TextSecondary.copy(alpha = 0.1f))
+                                .align(Alignment.CenterVertically)
+                        )
+                        Box(modifier = Modifier.weight(1f)) {
+                            GridItem(
+                                label = "Status",
+                                value = arrival.status.name,
+                                iconType = "status"
+                            )
                         }
                     }
                 }
             }
+
+            // Supplier Info Card (if present)
+            arrival.optionalSupplierName?.let { supplier ->
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Supplier", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                        Text(text = supplier, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    }
+                }
+            }
+
+            // Added/Updated Info Card
+            val sdf = SimpleDateFormat("dd MMM yyyy hh:mm a", Locale.getDefault())
+            GlassCard(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(text = "Metadata & Collaborators", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text(text = "Added By", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            Text(text = arrival.createdByName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                            Text(text = sdf.format(Date(arrival.createdAt)), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                        }
+                        if (arrival.updatedByName != null) {
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(text = "Last Updated By", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text(text = arrival.updatedByName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                                Text(text = sdf.format(Date(arrival.updatedAt)), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Action Buttons (Edit and Delete)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 48.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    GlassButton(
+                        text = "Edit Product",
+                        onClick = { onEditProduct(product.id) }
+                    )
+                }
+
+                Box(modifier = Modifier.weight(1f)) {
+                    GlassButton(
+                        text = "Delete",
+                        onClick = { showDeleteDialog = true },
+                        containerColor = StatusDanger,
+                        contentColor = Color.White
+                    )
+                }
+            }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Action Buttons (Edit and Delete)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 32.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Button(
-                onClick = { onEditProduct(product.id) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF006E3E))
-            ) {
-                Text(
-                    text = "Edit Product",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-            }
-
-            Button(
-                onClick = { showDeleteDialog = true },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Text(
-                    text = "Delete",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-            }
-        }
-    }
-
-    // Transparent floating Top App Bar
-    TopAppBar(
-        title = { Text("Product Details", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White) },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-    )
-} // closes Box
+        // Transparent floating Top App Bar
+        TopAppBar(
+            title = { Text("Product Details", style = MaterialTheme.typography.titleLarge, color = Color.White) },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+        )
+    } // closes Box
 } // closes DetailsScreen function
 
 @Composable
@@ -569,23 +537,23 @@ fun GridItem(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp, horizontal = 14.dp)
+            .padding(vertical = 16.dp, horizontal = 16.dp)
     ) {
         // Circle Icon
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(40.dp)
                 .clip(CircleShape)
-                .background(Color(0xFFE8F5E9)),
+                .background(PrimaryGreen.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
-            GridIcon(type = iconType, color = Color(0xFF2E7D32))
+            GridIcon(type = iconType, color = PrimaryGreen)
         }
 
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = label, fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
             Spacer(modifier = Modifier.height(2.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -593,26 +561,26 @@ fun GridItem(
             ) {
                 Text(
                     text = value,
-                    fontSize = 13.sp,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = TextPrimary,
                     modifier = Modifier.weight(1f, fill = false)
                 )
                 if (onCopy != null) {
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Box(
                         modifier = Modifier
-                            .size(20.dp)
+                            .size(24.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFF0F0F0))
+                            .background(TextSecondary.copy(alpha = 0.1f))
                             .clickable { onCopy() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.ContentCopy,
                             contentDescription = "Copy",
-                            tint = Color.DarkGray,
-                            modifier = Modifier.size(10.dp)
+                            tint = TextSecondary,
+                            modifier = Modifier.size(12.dp)
                         )
                     }
                 }
@@ -636,7 +604,7 @@ fun GridIcon(type: String, color: Color) {
         imageVector = icon,
         contentDescription = type,
         tint = color,
-        modifier = Modifier.size(16.dp)
+        modifier = Modifier.size(20.dp)
     )
 }
 

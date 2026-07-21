@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.stocksnap.app-mergeDebugResources-78:/values-port/values-port.xml",
+            "outputFile": "com.stocksnap.app-mergeDebugResources-82:/values-port/values-port.xml",
             "map": [
                 {
-                    "source": "/Users/richan_27/.gradle/caches/transforms-3/4592f40e42f802fdce601fc4c270cc7e/transformed/appcompat-1.6.1/res/values-port/values-port.xml",
+                    "source": "/Users/richan_27/.gradle/caches/transforms-3/5aca738c494f3de75cbc5aa028b98f6e/transformed/appcompat-1.6.1/res/values-port/values-port.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

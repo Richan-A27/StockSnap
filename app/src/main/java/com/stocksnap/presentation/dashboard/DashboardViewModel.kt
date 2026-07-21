@@ -64,25 +64,26 @@ class DashboardViewModel @Inject constructor(
     val employeeList: StateFlow<List<String>> = _employeeList
 
     init {
-        loadToday()
-    }
-
-    fun loadToday() {
         viewModelScope.launch {
-            val arrivals = repository.getAllArrivals()
-            _allItems.value = arrivals
-            
-            val products = repository.getAllProducts()
-            _allProducts.value = products
+            repository.getAllArrivalsFlow().collect { arrivals ->
+                _allItems.value = arrivals
+                val employees = arrivals.map { it.createdByName }.distinct().sorted()
+                _employeeList.value = employees
+                applyFilters()
+            }
+        }
 
-            // Extract unique employee names
-            val employees = arrivals.map { it.createdByName }.distinct().sorted()
-            _employeeList.value = employees
+        viewModelScope.launch {
+            repository.getAllProductsFlow().collect { products ->
+                _allProducts.value = products
+                applyFilters()
+            }
+        }
 
-            applyFilters()
-
-            // Fetch shared activity feed (from all employees, limit 100)
-            _activityLogs.value = repository.getLatestActivityLogs(100)
+        viewModelScope.launch {
+            repository.getLatestActivityLogsFlow(100).collect { logs ->
+                _activityLogs.value = logs
+            }
         }
     }
 

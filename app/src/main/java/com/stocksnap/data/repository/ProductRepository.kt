@@ -14,6 +14,7 @@ interface ProductRepository {
     suspend fun getProductByBarcode(barcode: String): Product?
     suspend fun getProductByBarcodeFirestore(barcode: String): Product?
     suspend fun getAllProducts(): List<Product>
+    fun getAllProductsFlow(): kotlinx.coroutines.flow.Flow<List<Product>>
     
     // Arrivals Deliveries
     suspend fun insertArrival(arrival: Arrival): Long
@@ -22,6 +23,7 @@ interface ProductRepository {
     suspend fun getArrivalById(id: Long): Arrival?
     suspend fun getArrivalByArrivalId(arrivalId: String): Arrival?
     suspend fun getAllArrivals(): List<Arrival>
+    fun getAllArrivalsFlow(): kotlinx.coroutines.flow.Flow<List<Arrival>>
     suspend fun getArrivalsByDay(day: Long): List<Arrival>
     suspend fun getArrivalsForToday(barcode: String, mrp: Double): List<Arrival>
     
@@ -32,6 +34,7 @@ interface ProductRepository {
     // Activity Feed (shared collaborative feed)
     suspend fun logActivityFeed(actionType: String, barcode: String, productName: String)
     suspend fun getLatestActivityLogs(limit: Int = 100): List<ActivityLog>
+    fun getLatestActivityLogsFlow(limit: Int = 100): kotlinx.coroutines.flow.Flow<List<ActivityLog>>
     
     // Live Synchronisation
     fun startRealtimeSync()

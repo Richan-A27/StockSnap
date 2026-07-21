@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -56,6 +57,7 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.5.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
     implementation("androidx.compose.material3:material3:1.1.0")
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
     implementation("androidx.activity:activity-compose:1.8.0")
     implementation("com.google.android.material:material:1.9.0")
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.0")
@@ -92,13 +94,14 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.4.0")
 
 
-    // Google Sign-In & Drive REST API (NO FIREBASE)
+    // Google Sign-In (Firebase Auth)
     implementation("com.google.android.gms:play-services-auth:20.7.0")
-    implementation("com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0") {
-        exclude(group = "org.apache.httpcomponents")
-    }
-    implementation("com.google.api-client:google-api-client-android:2.2.0")
-    implementation("com.google.http-client:google-http-client-gson:1.43.3")
+
+    // Firebase BoM and libraries
+    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
 
     // Zip utility for backup
     implementation("androidx.sqlite:sqlite-ktx:2.4.0")
@@ -107,4 +110,6 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.8.1")
     // Coroutines support for Tasks (used with ML Kit Task.await)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
+
+
 }

@@ -1,6 +1,7 @@
 package com.stocksnap.presentation.activity
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -9,22 +10,31 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
-import androidx.compose.material.icons.rounded.CallMerge
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.stocksnap.data.model.ActivityLog
-import java.text.SimpleDateFormat
-import java.util.*
+import com.stocksnap.presentation.components.GlassListItem
+import com.stocksnap.presentation.components.GlassSearchBar
+import com.stocksnap.presentation.components.GlassSegmentedControl
+import com.stocksnap.ui.theme.AppBackground
+import com.stocksnap.ui.theme.PrimaryGreen
+import com.stocksnap.ui.theme.StatusDanger
+import com.stocksnap.ui.theme.StatusWarning
+import com.stocksnap.ui.theme.TextPrimary
+import com.stocksnap.ui.theme.TextSecondary
 import android.text.format.DateUtils
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,131 +49,135 @@ fun ActivityLogsScreen(
     val employeeList by viewModel.employeeList.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8F9FA))
-    ) {
-        // Top App Bar
-        TopAppBar(
-            title = { Text("Activity Logs", fontWeight = FontWeight.ExtraBold, color = Color.Black) },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(imageVector = Icons.Rounded.ArrowBack, contentDescription = "Back", tint = Color.Black)
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF8F9FA))
-        )
+    Box(modifier = Modifier.fillMaxSize().background(AppBackground)) {
+        // Ambient glass background blurs
+        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize().blur(80.dp)) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(PrimaryGreen.copy(alpha = 0.12f), Color.Transparent)
+                ),
+                radius = size.width,
+                center = Offset(0f, 0f)
+            )
+        }
 
-        // Filters Section
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            // Search Bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.setSearchQuery(it) },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                placeholder = { Text("Search logs...", color = Color.Gray, fontSize = 14.sp) },
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = "Search", tint = Color.Gray) },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF006E3E),
-                    unfocusedBorderColor = Color.LightGray,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
-                )
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Top App Bar
+            TopAppBar(
+                title = { Text("Activity Logs", style = MaterialTheme.typography.titleLarge, color = TextPrimary) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(imageVector = Icons.Rounded.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
 
-            // Status Chips
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-            ) {
+            // Filters Section
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+                // Search Bar
+                GlassSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { viewModel.setSearchQuery(it) },
+                    onSearch = { },
+                    placeholder = "Search logs...",
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Status Segments
                 val statuses = listOf("All", "Created", "Updated", "Approved", "Disabled")
-                items(statuses.size) { index ->
-                    val status = statuses[index]
-                    val isSelected = status == selectedStatus
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.setStatus(status) },
-                        label = { Text(status) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF006E3E),
-                            selectedLabelColor = Color.White
-                        )
-                    )
-                }
-            }
+                GlassSegmentedControl(
+                    items = statuses,
+                    selectedIndex = statuses.indexOf(selectedStatus).coerceAtLeast(0),
+                    onItemSelected = { viewModel.setStatus(statuses[it]) }
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
 
-            // Date Chips
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-            ) {
-                val dates = listOf("All Time", "Today", "Yesterday", "Last 7 Days", "This Month")
-                items(dates.size) { index ->
-                    val date = dates[index]
-                    val isSelected = date == selectedDate
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.setDate(date) },
-                        label = { Text(date) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF006E3E),
-                            selectedLabelColor = Color.White
-                        )
-                    )
+                // Date Segments
+                val dates = listOf("All Time", "Today", "Yesterday", "7 Days", "Month")
+                val dateIndex = when (selectedDate) {
+                    "All Time" -> 0
+                    "Today" -> 1
+                    "Yesterday" -> 2
+                    "Last 7 Days" -> 3
+                    "This Month" -> 4
+                    else -> 0
                 }
-            }
+                GlassSegmentedControl(
+                    items = dates,
+                    selectedIndex = dateIndex,
+                    onItemSelected = { 
+                        val filter = when(it) {
+                            0 -> "All Time"
+                            1 -> "Today"
+                            2 -> "Yesterday"
+                            3 -> "Last 7 Days"
+                            4 -> "This Month"
+                            else -> "All Time"
+                        }
+                        viewModel.setDate(filter)
+                    }
+                )
 
-            // Employee Dropdown
-            var expanded by remember { mutableStateOf(false) }
-            Box(modifier = Modifier.padding(bottom = 12.dp)) {
-                OutlinedButton(
-                    onClick = { expanded = true },
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(text = "Employee: $selectedEmployee", color = Color(0xFF006E3E))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Rounded.ArrowDropDown,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = Color(0xFF006E3E)
-                    )
-                }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier.background(Color.White)
-                ) {
-                    employeeList.forEach { emp ->
-                        DropdownMenuItem(
-                            text = { Text(emp, color = Color.Black) },
-                            onClick = {
-                                viewModel.setEmployee(emp)
-                                expanded = false
-                            }
-                        )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Employee Dropdown (styled as a chip)
+                var expanded by remember { mutableStateOf(false) }
+                Box(modifier = Modifier.padding(bottom = 16.dp)) {
+                    Surface(
+                        color = Color.White.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.clickable { expanded = true }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text(text = "Employee: $selectedEmployee", style = MaterialTheme.typography.bodySmall, color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Rounded.ArrowDropDown,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = TextPrimary
+                            )
+                        }
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier.background(AppBackground)
+                    ) {
+                        employeeList.forEach { emp ->
+                            DropdownMenuItem(
+                                text = { Text(emp, color = TextPrimary) },
+                                onClick = {
+                                    viewModel.setEmployee(emp)
+                                    expanded = false
+                                }
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        // Logs List
-        if (logs.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "No logs found matching filters.", color = Color.Gray, fontSize = 14.sp)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(logs) { log ->
-                    ActivityLogCard(log = log)
+            // Logs List
+            if (logs.isEmpty()) {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text(text = "No logs found matching filters.", style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 100.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(logs) { log ->
+                        ActivityLogCard(log = log)
+                    }
                 }
             }
         }
@@ -172,22 +186,16 @@ fun ActivityLogsScreen(
 
 @Composable
 fun ActivityLogCard(log: ActivityLog) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
-    ) {
+    GlassListItem {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             val (circleBg, iconType, iconColor) = getActivityIconAndColors(log.actionType)
             
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(circleBg),
                 contentAlignment = Alignment.Center
@@ -205,7 +213,7 @@ fun ActivityLogCard(log: ActivityLog) {
                     imageVector = icon,
                     contentDescription = null,
                     tint = iconColor,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
@@ -215,9 +223,8 @@ fun ActivityLogCard(log: ActivityLog) {
                 val actionDesc = getActionDescription(log)
                 Text(
                     text = "${log.performedByName} $actionDesc",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = TextPrimary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -229,13 +236,13 @@ fun ActivityLogCard(log: ActivityLog) {
                 ) {
                     Text(
                         text = "Code: ${log.barcode.takeLast(6)}",
-                        fontSize = 12.sp,
-                        color = Color.Gray
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary
                     )
                     Text(
                         text = getRelativeTime(log.timestamp),
-                        fontSize = 12.sp,
-                        color = Color.Gray
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary
                     )
                 }
             }
@@ -246,21 +253,21 @@ fun ActivityLogCard(log: ActivityLog) {
 private fun getActivityIconAndColors(actionType: String): Triple<Color, String, Color> {
     return when {
         actionType.contains("MERGED") ->
-            Triple(Color(0xFFE0F7FA), "merge", Color(0xFF0097A7))
+            Triple(Color(0xFF0097A7).copy(alpha = 0.1f), "merge", Color(0xFF0097A7))
         actionType.contains("APPROVED") || actionType.contains("ENABLED") -> 
-            Triple(Color(0xFFE8F5E9), "check", Color(0xFF2E7D32))
+            Triple(PrimaryGreen.copy(alpha = 0.1f), "check", PrimaryGreen)
         actionType.contains("DISABLED") || actionType.contains("REJECTED") -> 
-            Triple(Color(0xFFFFEBEE), "block", Color(0xFFC62828))
+            Triple(StatusDanger.copy(alpha = 0.1f), "block", StatusDanger)
         actionType.contains("MARKED_PENDING") -> 
-            Triple(Color(0xFFFFF3E0), "undo", Color(0xFFE65100))
+            Triple(StatusWarning.copy(alpha = 0.1f), "undo", StatusWarning)
         actionType.contains("CHANGED") || actionType.contains("UPDATED") -> 
-            Triple(Color(0xFFE3F2FD), "edit", Color(0xFF1565C0))
+            Triple(Color(0xFF34C759).copy(alpha = 0.1f), "edit", Color(0xFF34C759))
         actionType.contains("CREATED") || actionType.contains("ADD") -> 
-            Triple(Color(0xFFF3E5F5), "plus", Color(0xFF7B1FA2))
+            Triple(Color(0xFF5E5CE6).copy(alpha = 0.1f), "plus", Color(0xFF5E5CE6))
         actionType.contains("SCAN") -> 
-            Triple(Color(0xFFFFF3E0), "inventory", Color(0xFFE65100))
+            Triple(StatusWarning.copy(alpha = 0.1f), "inventory", StatusWarning)
         else -> 
-            Triple(Color(0xFFFFF3E0), "inventory", Color(0xFFE65100))
+            Triple(StatusWarning.copy(alpha = 0.1f), "inventory", StatusWarning)
     }
 }
 

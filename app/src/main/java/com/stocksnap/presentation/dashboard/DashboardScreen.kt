@@ -1,55 +1,41 @@
 package com.stocksnap.presentation.dashboard
 
-import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Inbox
 import androidx.compose.material.icons.rounded.Inventory
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.QrCodeScanner
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Undo
-import androidx.compose.material.icons.rounded.Unarchive
-import androidx.compose.material.icons.rounded.ShoppingBag
 import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.CheckCircleOutline
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material.icons.rounded.ShoppingBag
+import androidx.compose.material.icons.rounded.Unarchive
+import androidx.compose.material.icons.rounded.Undo
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,8 +43,15 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.stocksnap.data.model.ActivityLog
 import com.stocksnap.domain.model.ProductStatus
-import java.text.SimpleDateFormat
-import java.util.Date
+import com.stocksnap.presentation.components.GlassCard
+import com.stocksnap.presentation.components.GlassListItem
+import com.stocksnap.presentation.components.GlassSegmentedControl
+import com.stocksnap.ui.theme.AppBackground
+import com.stocksnap.ui.theme.PrimaryGreen
+import com.stocksnap.ui.theme.StatusDanger
+import com.stocksnap.ui.theme.StatusWarning
+import com.stocksnap.ui.theme.TextPrimary
+import com.stocksnap.ui.theme.TextSecondary
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,431 +71,267 @@ fun DashboardScreen(
     val pending by viewModel.pending.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8F9FA)),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // 1. Profile Header
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Welcome back, ${currentUser?.name ?: "User"} 👋",
-                        fontSize = 16.sp,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.5).sp
-                    )
-                }
-
-                // Profile Image with Active Dot
-                Box(modifier = Modifier.size(48.dp)) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(currentUser?.photoUrl)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(Color.LightGray),
-                        contentScale = ContentScale.Crop
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFFAFAFA))
-                            .align(Alignment.BottomEnd),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF2E7D32))
-                        )
-                    }
-                }
-            }
+    Box(modifier = Modifier.fillMaxSize().background(AppBackground)) {
+        // Ambient glass background blurs
+        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize().blur(80.dp)) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(PrimaryGreen.copy(alpha = 0.12f), Color.Transparent)
+                ),
+                radius = size.width,
+                center = Offset(0f, 0f)
+            )
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(PrimaryGreen.copy(alpha = 0.08f), Color.Transparent)
+                ),
+                radius = size.width * 0.8f,
+                center = Offset(size.width, size.height * 0.5f)
+            )
         }
 
-        // 2. Today's Arrivals Statistics Card
-        item {
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.elevatedCardColors(containerColor = Color(0xFF0D4B2A))
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    // Top Row: Icon, Title, Subtitle
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 100.dp), // Bottom padding for nav bar
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            // 1. Profile Header
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Hello, ${currentUser?.name?.substringBefore(" ") ?: "User"}",
+                            style = MaterialTheme.typography.displayMedium,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Ready to manage some inventory? 👋",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = TextSecondary,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+
+                    Box(modifier = Modifier.size(56.dp)) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(currentUser?.photoUrl)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Profile Picture",
                             modifier = Modifier
                                 .size(56.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFE8F5E9)),
+                                .background(Color.LightGray),
+                            contentScale = ContentScale.Crop
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(14.dp)
+                                .clip(CircleShape)
+                                .background(AppBackground)
+                                .align(Alignment.BottomEnd),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Rounded.Unarchive, contentDescription = null, tint = Color(0xFF0D4B2A), modifier = Modifier.size(28.dp))
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text("Today’s Arrivals", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                            Text("Here’s what’s happening today", color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Stats box with thin border
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-                            .padding(16.dp)
-                    ) {
-                        Column {
-                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                // Total
-                                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(Color(0xFF145E35)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(Icons.Rounded.ShoppingBag, contentDescription = null, tint = Color(0xFF81C784), modifier = Modifier.size(20.dp))
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text("Total", color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp)
-                                        Text(total.toString(), color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-                                    }
-                                }
-                                
-                                // Divider
-                                Box(modifier = Modifier.width(1.dp).height(50.dp).background(Color.White.copy(alpha = 0.15f)))
-                                
-                                // Pending
-                                Row(modifier = Modifier.weight(1f).padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(Color(0xFF145E35)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(Icons.Rounded.Schedule, contentDescription = null, tint = Color(0xFFFFB74D), modifier = Modifier.size(20.dp))
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text("Pending", color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp)
-                                        Text(pending.toString(), color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-                                    }
-                                }
-                            }
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Divider(color = Color.White.copy(alpha = 0.15f), thickness = 1.dp)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            // Updated Today
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(Color(0xFF145E35)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(Icons.Rounded.CheckCircleOutline, contentDescription = null, tint = Color(0xFF81C784), modifier = Modifier.size(20.dp))
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text("Updated Today", color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp)
-                                    Text(updated.toString(), color = Color(0xFF81C784), fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // 4. Scan Action
-        item {
-            ElevatedCard(
-                onClick = onBarcodeScan,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.elevatedCardColors(containerColor = Color.Transparent)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(Color(0xFF007A48), Color(0xFF005330))
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(PrimaryGreen)
                             )
-                        )
-                        .padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color.White),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.QrCodeScanner,
-                            contentDescription = null,
-                            tint = Color(0xFF007A48),
-                            modifier = Modifier.size(28.dp)
-                        )
+                        }
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Scan Product",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "Register new stock or log arrivals instantly",
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.85f),
-                            lineHeight = 16.sp
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Rounded.ChevronRight,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
                 }
             }
-        }
 
-        // 5. Filters Section
-        item {
-            FilterSection(viewModel = viewModel)
-        }
-
-        // 5. Recent Deliveries Section
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Recent Deliveries",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Row(
-                    modifier = Modifier.clickable { onViewAllDeliveries() },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "View all",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF006E3E)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Icon(
-                        imageVector = Icons.Rounded.ChevronRight,
-                        contentDescription = "View all",
-                        tint = Color(0xFF006E3E),
-                        modifier = Modifier.size(14.dp)
-                    )
-                }
-            }
-        }
-
-        if (itemsState.isEmpty()) {
+            // 2. Today's Arrivals Statistics GlassCard
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(110.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Color.White)
-                        .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(16.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Rounded.Inbox, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(32.dp))
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "No stock arrivals recorded today.", color = Color.Gray, fontSize = 13.sp)
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(PrimaryGreen.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Rounded.Unarchive, contentDescription = null, tint = PrimaryGreen, modifier = Modifier.size(24.dp))
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text("Today’s Arrivals", style = MaterialTheme.typography.headlineLarge, color = TextPrimary)
+                                Text("Quick overview of today's stats", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            StatItem(
+                                modifier = Modifier.weight(1f),
+                                label = "Total",
+                                count = total,
+                                icon = Icons.Rounded.ShoppingBag,
+                                color = PrimaryGreen
+                            )
+                            Divider(modifier = Modifier.width(1.dp).height(40.dp), color = TextSecondary.copy(alpha = 0.2f))
+                            StatItem(
+                                modifier = Modifier.weight(1f),
+                                label = "Pending",
+                                count = pending,
+                                icon = Icons.Rounded.Schedule,
+                                color = StatusWarning
+                            )
+                            Divider(modifier = Modifier.width(1.dp).height(40.dp), color = TextSecondary.copy(alpha = 0.2f))
+                            StatItem(
+                                modifier = Modifier.weight(1f),
+                                label = "Updated",
+                                count = updated,
+                                icon = Icons.Rounded.CheckCircleOutline,
+                                color = PrimaryGreen
+                            )
+                        }
                     }
                 }
             }
-        } else {
-            items(itemsState.take(5)) { item ->
-                ElevatedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onArrivalClick(item.arrival.arrivalId) },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
+
+            // 3. Scan Action
+            item {
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth().clickable { onBarcodeScan() }
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
+                            .padding(20.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Product image thumbnail
-                        AsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .data(item.product?.frontImagePath?.ifEmpty { item.product.frontImageUrl } ?: "")
-                                .crossfade(true)
-                                .build(),
-                            contentDescription = "Product Image",
+                        Box(
                             modifier = Modifier
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFFFAFAFA)),
-                            contentScale = ContentScale.Crop
-                        )
-
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(PrimaryGreen),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.QrCodeScanner,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                         Spacer(modifier = Modifier.width(16.dp))
-
-                        // Product text detail
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = item.arrival.productName,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                                text = "Scan Product",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = TextPrimary
                             )
-                            if (item.product != null && item.product.code.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Use camera to scan barcode instantly",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Rounded.ChevronRight,
+                            contentDescription = null,
+                            tint = TextSecondary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
+
+            // 4. Filters Section (Segmented Controls instead of chips)
+            item {
+                FilterSection(viewModel = viewModel)
+            }
+
+            // 5. Recent Deliveries Section
+            item {
+                SectionHeader("Recent Deliveries", onViewAllDeliveries)
+            }
+
+            if (itemsState.isEmpty()) {
+                item {
+                    EmptyStateCard(icon = Icons.Rounded.Inbox, message = "No stock arrivals recorded today.")
+                }
+            } else {
+                items(itemsState.take(5)) { item ->
+                    GlassListItem(
+                        modifier = Modifier.padding(bottom = 12.dp),
+                        onClick = { onArrivalClick(item.arrival.arrivalId) }
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(item.product?.frontImagePath?.ifEmpty { item.product.frontImageUrl } ?: "")
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "Product Image",
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White.copy(alpha = 0.5f)),
+                                contentScale = ContentScale.Crop
+                            )
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Code: ${item.product.code}",
-                                    fontSize = 12.sp,
-                                    color = Color.DarkGray
+                                    text = item.arrival.productName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = TextPrimary
+                                )
+                                if (item.product != null && item.product.code.isNotEmpty()) {
+                                    Text(
+                                        text = "Code: ${item.product.code}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Qty: ${item.arrival.quantityReceived}   •   MRP: ₹${item.arrival.mrp}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Qty: ${item.arrival.quantityReceived}   •   MRP: ₹${item.arrival.mrp}",
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
 
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Status pill and navigation chevron
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
                             StatusChip(status = item.arrival.status)
-                            Icon(
-                                imageVector = Icons.Rounded.ChevronRight,
-                                contentDescription = "Open",
-                                tint = Color.LightGray,
-                                modifier = Modifier.size(16.dp)
-                            )
                         }
                     }
                 }
             }
-        }
 
-        // 6. Recent Activity Section
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Recent Activity",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Row(
-                    modifier = Modifier.clickable { onViewAllActivity() },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "View all",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF006E3E)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Icon(
-                        imageVector = Icons.Rounded.ChevronRight,
-                        contentDescription = "View all",
-                        tint = Color(0xFF006E3E),
-                        modifier = Modifier.size(14.dp)
-                    )
-                }
+            // 6. Recent Activity Section
+            item {
+                SectionHeader("Recent Activity", onViewAllActivity)
             }
-        }
 
-        if (activityLogsState.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(110.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Color.White)
-                        .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(16.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Rounded.History, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(32.dp))
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "No activities registered yet.", color = Color.Gray, fontSize = 13.sp)
-                    }
+            if (activityLogsState.isEmpty()) {
+                item {
+                    EmptyStateCard(icon = Icons.Rounded.History, message = "No activities registered yet.")
                 }
-            }
-        } else {
-            item {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        activityLogsState.take(3).forEachIndexed { index, log ->
-                            ActivityRow(log = log)
-                            if (index < activityLogsState.take(3).size - 1) {
-                                Divider(color = Color(0xFFF0F0F0))
+            } else {
+                item {
+                    GlassCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            activityLogsState.take(3).forEachIndexed { index, log ->
+                                ActivityRow(log = log)
+                                if (index < activityLogsState.take(3).size - 1) {
+                                    Divider(color = TextSecondary.copy(alpha = 0.1f))
+                                }
                             }
                         }
                     }
@@ -513,32 +342,69 @@ fun DashboardScreen(
 }
 
 @Composable
+fun SectionHeader(title: String, onViewAll: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            color = TextPrimary
+        )
+        Row(
+            modifier = Modifier.clickable { onViewAll() },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "See All",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = PrimaryGreen
+            )
+        }
+    }
+}
+
+@Composable
 fun StatItem(
     modifier: Modifier = Modifier,
     label: String,
     count: Int,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     color: Color
 ) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp).padding(bottom = 4.dp))
         Text(
             text = count.toString(),
-            fontSize = 28.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = color,
-            letterSpacing = (-0.5).sp
+            style = MaterialTheme.typography.displayMedium,
+            color = TextPrimary
         )
-        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
-            fontSize = 11.sp,
-            color = Color.Gray,
-            fontWeight = FontWeight.Bold,
-            lineHeight = 14.sp,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary,
+            textAlign = TextAlign.Center
         )
+    }
+}
+
+@Composable
+fun EmptyStateCard(icon: androidx.compose.ui.graphics.vector.ImageVector, message: String) {
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(icon, contentDescription = null, tint = TextSecondary.copy(alpha = 0.5f), modifier = Modifier.size(48.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = message, style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
+        }
     }
 }
 
@@ -549,23 +415,24 @@ fun StatusChip(status: ProductStatus) {
 
     when (status) {
         ProductStatus.PENDING -> {
-            bgColor = Color(0xFFFFF3E0)
-            textColor = Color(0xFFE65100) // Orange
+            bgColor = StatusWarning.copy(alpha = 0.15f)
+            textColor = StatusWarning
         }
         ProductStatus.UPDATED -> {
-            bgColor = Color(0xFFE8F5E9)
-            textColor = Color(0xFF2E7D32) // Green
+            bgColor = PrimaryGreen.copy(alpha = 0.15f)
+            textColor = PrimaryGreen
         }
     }
 
-    Surface(
-        color = bgColor,
-        shape = RoundedCornerShape(6.dp)
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(bgColor)
+            .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
         Text(
             text = status.name,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            fontSize = 10.sp,
+            style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
             color = textColor
         )
@@ -577,31 +444,30 @@ fun ActivityRow(log: ActivityLog) {
     val timeStr = getRelativeTime(log.timestamp)
     val (circleBg, iconType, iconColor) = when {
         log.actionType.contains("APPROVED") || log.actionType.contains("ENABLED") -> 
-            Triple(Color(0xFFE8F5E9), "check", Color(0xFF2E7D32))
+            Triple(PrimaryGreen.copy(alpha = 0.1f), "check", PrimaryGreen)
         log.actionType.contains("DISABLED") || log.actionType.contains("REJECTED") -> 
-            Triple(Color(0xFFFFEBEE), "block", Color(0xFFC62828))
+            Triple(StatusDanger.copy(alpha = 0.1f), "block", StatusDanger)
         log.actionType.contains("MARKED_PENDING") -> 
-            Triple(Color(0xFFFFF3E0), "undo", Color(0xFFE65100))
+            Triple(StatusWarning.copy(alpha = 0.1f), "undo", StatusWarning)
         log.actionType.contains("CHANGED") || log.actionType.contains("UPDATED") -> 
-            Triple(Color(0xFFE3F2FD), "edit", Color(0xFF1565C0))
+            Triple(Color(0xFF34C759).copy(alpha = 0.1f), "edit", Color(0xFF34C759))
         log.actionType.contains("CREATED") || log.actionType.contains("ADD") -> 
-            Triple(Color(0xFFF3E5F5), "plus", Color(0xFF7B1FA2))
+            Triple(Color(0xFF5E5CE6).copy(alpha = 0.1f), "plus", Color(0xFF5E5CE6))
         log.actionType.contains("SCAN") -> 
-            Triple(Color(0xFFFFF3E0), "inventory", Color(0xFFE65100))
+            Triple(StatusWarning.copy(alpha = 0.1f), "inventory", StatusWarning)
         else -> 
-            Triple(Color(0xFFFFF3E0), "inventory", Color(0xFFE65100))
+            Triple(StatusWarning.copy(alpha = 0.1f), "inventory", StatusWarning)
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp, horizontal = 16.dp),
+            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icon
         Box(
             modifier = Modifier
-                .size(32.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(circleBg),
             contentAlignment = Alignment.Center
@@ -609,27 +475,21 @@ fun ActivityRow(log: ActivityLog) {
             ActivityIcon(type = iconType, color = iconColor)
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
-        // Text Content
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "${log.performedByName} ${getActionDescription(log)}",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.DarkGray
+                style = MaterialTheme.typography.bodyLarge,
+                color = TextPrimary
+            )
+            Text(
+                text = timeStr,
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+                modifier = Modifier.padding(top = 2.dp)
             )
         }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Time
-        Text(
-            text = timeStr,
-            fontSize = 11.sp,
-            color = Color.Gray,
-            fontWeight = FontWeight.Medium
-        )
     }
 }
 
@@ -647,7 +507,7 @@ fun ActivityIcon(type: String, color: Color) {
         imageVector = icon,
         contentDescription = null,
         tint = color,
-        modifier = Modifier.size(16.dp)
+        modifier = Modifier.size(18.dp)
     )
 }
 
@@ -684,97 +544,49 @@ private fun getRelativeTime(timestamp: Long): String {
     return when {
         diff < 0 -> "just now"
         seconds < 60 -> "just now"
-        minutes < 60 -> "$minutes min${if (minutes > 1) "s" else ""} ago"
-        hours < 24 -> "$hours hr${if (hours > 1) "s" else ""} ago"
+        minutes < 60 -> "${minutes}m ago"
+        hours < 24 -> "${hours}h ago"
         days == 1L -> "yesterday"
-        else -> "$days days ago"
+        else -> "${days}d ago"
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterSection(viewModel: DashboardViewModel) {
     val selectedStatus by viewModel.selectedStatus.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
-    val selectedEmployee by viewModel.selectedEmployee.collectAsState()
-    val employeeList by viewModel.employeeList.collectAsState()
-    var showEmployeeMenu by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-        // Status Row
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            val statuses = listOf("All", "Pending", "Updated")
-            items(statuses) { status ->
-                FilterChip(
-                    selected = selectedStatus == status,
-                    onClick = { viewModel.setStatusFilter(status) },
-                    label = { Text(status) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFF006E3E),
-                        selectedLabelColor = Color.White
-                    )
-                )
-            }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        val statuses = listOf("All", "Pending", "Updated")
+        GlassSegmentedControl(
+            items = statuses,
+            selectedIndex = statuses.indexOf(selectedStatus).coerceAtLeast(0),
+            onItemSelected = { viewModel.setStatusFilter(statuses[it]) }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        val dates = listOf("Today", "Yesterday", "7 Days", "Month")
+        val dateIndex = when (selectedDate) {
+            "Today" -> 0
+            "Yesterday" -> 1
+            "Last 7 Days" -> 2
+            "This Month" -> 3
+            else -> 0
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Date Row
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            val dates = listOf("Today", "Yesterday", "Last 7 Days", "This Month")
-            items(dates) { date ->
-                FilterChip(
-                    selected = selectedDate == date,
-                    onClick = { viewModel.setDateFilter(date) },
-                    label = { Text(date) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFF006E3E),
-                        selectedLabelColor = Color.White
-                    )
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Employee Row
-        Box(modifier = Modifier.fillMaxWidth()) {
-            FilterChip(
-                selected = selectedEmployee != "All Employees",
-                onClick = { showEmployeeMenu = true },
-                label = { Text(if (selectedEmployee == "All Employees") "All Staff ▼" else "$selectedEmployee ▼") },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color(0xFF006E3E),
-                    selectedLabelColor = Color.White
-                )
-            )
-            DropdownMenu(
-                expanded = showEmployeeMenu,
-                onDismissRequest = { showEmployeeMenu = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("All Employees") },
-                    onClick = {
-                        viewModel.setEmployeeFilter("All Employees")
-                        showEmployeeMenu = false
-                    }
-                )
-                employeeList.forEach { emp ->
-                    DropdownMenuItem(
-                        text = { Text(emp) },
-                        onClick = {
-                            viewModel.setEmployeeFilter(emp)
-                            showEmployeeMenu = false
-                        }
-                    )
+        GlassSegmentedControl(
+            items = dates,
+            selectedIndex = dateIndex,
+            onItemSelected = { 
+                val filter = when(it) {
+                    0 -> "Today"
+                    1 -> "Yesterday"
+                    2 -> "Last 7 Days"
+                    3 -> "This Month"
+                    else -> "Today"
                 }
+                viewModel.setDateFilter(filter) 
             }
-        }
+        )
     }
 }

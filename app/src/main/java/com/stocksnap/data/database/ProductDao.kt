@@ -31,6 +31,9 @@ interface ProductDao {
     @Query("SELECT * FROM products ORDER BY createdAt DESC")
     suspend fun getAllProducts(): List<Product>
 
+    @Query("SELECT * FROM products ORDER BY createdAt DESC")
+    fun getAllProductsFlow(): kotlinx.coroutines.flow.Flow<List<Product>>
+
     @Query("SELECT * FROM products WHERE isPendingSync = 1")
     suspend fun getUnsyncedProducts(): List<Product>
 
@@ -62,6 +65,9 @@ interface ProductDao {
 
     @Query("SELECT * FROM arrivals ORDER BY createdAt DESC")
     suspend fun getAllArrivals(): List<Arrival>
+
+    @Query("SELECT * FROM arrivals ORDER BY createdAt DESC")
+    fun getAllArrivalsFlow(): kotlinx.coroutines.flow.Flow<List<Arrival>>
 
     @Query("SELECT * FROM arrivals WHERE DATE(createdAt / 1000, 'unixepoch') = DATE(:day / 1000, 'unixepoch') ORDER BY createdAt DESC")
     suspend fun getArrivalsByDay(day: Long): List<Arrival>
@@ -106,4 +112,7 @@ interface ProductDao {
 
     @Query("SELECT * FROM activity_logs ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getLatestActivityLogs(limit: Int = 100): List<ActivityLog>
+
+    @Query("SELECT * FROM activity_logs ORDER BY timestamp DESC LIMIT :limit")
+    fun getLatestActivityLogsFlow(limit: Int = 100): kotlinx.coroutines.flow.Flow<List<ActivityLog>>
 }

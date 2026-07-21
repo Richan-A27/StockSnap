@@ -2,12 +2,19 @@ package com.stocksnap.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val md_theme_light_primary = Color(0xFF006E3E)
-val md_theme_light_onPrimary = Color(0xFFFFFFFF)
-val md_theme_light_background = Color(0xFFF6F6F6)
-val md_theme_light_surface = Color(0xFFFFFFFF)
+// Glassmorphism Premium Apple-inspired Theme Colors
+val PrimaryGreen = Color(0xFF0E7A43)
+val AccentGreen = Color(0xFF34C759)
+val AppBackground = Color(0xFFF4F7FA)
 
-val md_theme_dark_primary = Color(0xFF7AD399)
-val md_theme_dark_onPrimary = Color(0xFF00391E)
-val md_theme_dark_background = Color(0xFF101010)
-val md_theme_dark_surface = Color(0xFF1B1B1B)
+val TextPrimary = Color(0xFF111111)
+val TextSecondary = Color(0xFF6F6F73)
+val TextTertiary = Color(0xFF999999)
+
+val StatusWarning = Color(0xFFFF9F0A)
+val StatusDanger = Color(0xFFFF453A)
+val StatusSuccess = Color(0xFF34C759)
+
+val GlassBackground = Color(0x8CFFFFFF) // rgba(255,255,255,0.55)
+val GlassBorder = Color(0x59FFFFFF) // rgba(255,255,255,0.35)
+val NavGlassBackground = Color(0xA6FFFFFF) // rgba(255,255,255,0.65)

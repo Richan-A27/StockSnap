@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.stocksnap.app-mergeDebugResources-78:/values-small-v4/values-small-v4.xml",
+            "outputFile": "com.stocksnap.app-mergeDebugResources-82:/values-small-v4/values-small-v4.xml",
             "map": [
                 {
-                    "source": "/Users/richan_27/.gradle/caches/transforms-3/a46c2b1622286551305d45fae393af2e/transformed/material-1.9.0/res/values-small-v4/values-small-v4.xml",
+                    "source": "/Users/richan_27/.gradle/caches/transforms-3/2b9b140a3d764725db4dc3958014bf14/transformed/material-1.9.0/res/values-small-v4/values-small-v4.xml",
                     "from": {
                         "startLines": "2,3,4,5",
                         "startColumns": "4,4,4,4",

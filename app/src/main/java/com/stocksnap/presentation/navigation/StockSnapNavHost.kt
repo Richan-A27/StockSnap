@@ -1,5 +1,9 @@
 package com.stocksnap.presentation.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -80,7 +84,30 @@ fun StockSnapNavHost(
         }
     }
 
-    NavHost(navController = navController, startDestination = startDest) {
+    NavHost(
+        navController = navController,
+        startDestination = startDest,
+        enterTransition = {
+            fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left, tween(300)
+            )
+        },
+        exitTransition = {
+            fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left, tween(300)
+            )
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right, tween(300)
+            )
+        },
+        popExitTransition = {
+            fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right, tween(300)
+            )
+        }
+    ) {
         composable("login") {
             LoginScreen(onLoginSuccess = {
                 // Read directly from StateFlow (not Compose state) to avoid stale reads

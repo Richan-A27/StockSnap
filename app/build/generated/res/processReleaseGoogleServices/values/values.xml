@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_web_client_id" translatable="false">541149330304-bi3oiur2ihap561uqg4ggkk61q817lti.apps.googleusercontent.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">541149330304</string>
+    <string name="google_api_key" translatable="false">AIzaSyBW8kepibfyRgomEgIRa_KMTAlj9hXvukg</string>
+    <string name="google_app_id" translatable="false">1:541149330304:android:8cafe8cca3e8794191df65</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBW8kepibfyRgomEgIRa_KMTAlj9hXvukg</string>
+    <string name="google_storage_bucket" translatable="false">stocksnap-1bf09.firebasestorage.app</string>
+    <string name="project_id" translatable="false">stocksnap-1bf09</string>
+</resources>

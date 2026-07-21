@@ -26,6 +26,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -66,6 +69,9 @@ fun BarcodeScannerCamera(
     var imageWidth by remember { mutableStateOf(0) }
     var imageHeight by remember { mutableStateOf(0) }
     var isProcessing by remember { mutableStateOf(false) }
+
+    var cameraControl by remember { mutableStateOf<androidx.camera.core.CameraControl?>(null) }
+    var cameraInfo by remember { mutableStateOf<androidx.camera.core.CameraInfo?>(null) }
 
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     
@@ -215,12 +221,14 @@ fun BarcodeScannerCamera(
                 
             try {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
+                val camera = cameraProvider.bindToLifecycle(
                     lifecycleOwner,
                     CameraSelector.DEFAULT_BACK_CAMERA,
                     preview,
                     imageAnalyzer
                 )
+                cameraControl = camera.cameraControl
+                cameraInfo = camera.cameraInfo
             } catch (exc: Exception) {
                 Log.e("BarcodeScannerCamera", "Use case binding failed", exc)
             }
@@ -235,7 +243,30 @@ fun BarcodeScannerCamera(
     Box(modifier = modifier) {
         AndroidView(
             factory = { previewView },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, _, zoom, _ ->
+                        val currentZoom = cameraInfo?.zoomState?.value?.zoomRatio ?: 1f
+                        cameraControl?.setZoomRatio(
+                            (currentZoom * zoom).coerceIn(
+                                cameraInfo?.zoomState?.value?.minZoomRatio ?: 1f,
+                                cameraInfo?.zoomState?.value?.maxZoomRatio ?: 10f
+                            )
+                        )
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { offset ->
+                            val factory = previewView.meteringPointFactory
+                            val point = factory.createPoint(offset.x, offset.y)
+                            val action = androidx.camera.core.FocusMeteringAction.Builder(point, androidx.camera.core.FocusMeteringAction.FLAG_AF)
+                                .build()
+                            cameraControl?.startFocusAndMetering(action)
+                        }
+                    )
+                }
         )
         
         // Draw green bounding box if detected

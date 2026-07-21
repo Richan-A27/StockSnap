@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -159,49 +160,35 @@ fun StockSnapApp(
     val currentRoute = currentBackStackEntry?.destination?.route
 
     // Enforce hiding bottom nav bar when unauthenticated
-    val showBottomBar = currentRoute != null && currentRoute != "login"
+    val showBottomBar = currentRoute != null && currentRoute !in setOf("login", "pendingApproval", "rejectedScreen", "disabledScreen", "scan")
 
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
-                    val items = listOf("dashboard", "products", "history", "settings")
-                    items.forEach { route ->
-                        NavigationBarItem(
-                            selected = currentRoute == route,
-                            onClick = {
-                                navController.navigate(route) {
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = {
-                                val iconVector = when (route) {
-                                    "dashboard" -> Icons.Rounded.Home
-                                    "products" -> Icons.Rounded.Inventory
-                                    "history" -> Icons.Rounded.History
-                                    "settings" -> Icons.Rounded.Settings
-                                    else -> Icons.Rounded.Home
-                                }
-                                Icon(imageVector = iconVector, contentDescription = route)
-                            },
-                            label = {
-                                val labelText = when (route) {
-                                    "history" -> "Activity"
-                                    else -> route.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-                                }
-                                Text(labelText)
-                            }
-                        )
+                com.stocksnap.presentation.components.GlassNavigationBar(
+                    items = listOf(
+                        com.stocksnap.presentation.components.NavItem("Home", Icons.Rounded.Home, "dashboard"),
+                        com.stocksnap.presentation.components.NavItem("Products", Icons.Rounded.Inventory, "products"),
+                        com.stocksnap.presentation.components.NavItem("Activity", Icons.Rounded.History, "history"),
+                        com.stocksnap.presentation.components.NavItem("Settings", Icons.Rounded.Settings, "settings")
+                    ),
+                    currentRoute = currentRoute,
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
-                }
+                )
             }
-        }
+        },
+        containerColor = com.stocksnap.ui.theme.AppBackground
     ) { innerPadding ->
-        Surface(modifier = Modifier.padding(innerPadding)) {
+        Surface(
+            modifier = Modifier.padding(innerPadding).fillMaxSize(),
+            color = Color.Transparent
+        ) {
             StockSnapNavHost(
                 navController = navController,
                 authRepository = authRepository
