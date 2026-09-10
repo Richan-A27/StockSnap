@@ -75,7 +75,7 @@ class SyncWorker(
                                 dao.update(product.copy(catalogImagePath = catalogPath))
                             }
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            Log.e(TAG, "Failed to upload optimized image for ${product.barcode}", e)
                         }
                     }
                 }
@@ -130,7 +130,7 @@ class SyncWorker(
 
             Result.success()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Sync failed, will retry", e)
             Result.retry()
         }
     }

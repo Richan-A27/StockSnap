@@ -1,5 +1,6 @@
 package com.stocksnap.data.repository
 
+import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -19,6 +20,10 @@ class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val firestore: FirebaseFirestore
 ) : AuthRepository {
+
+    companion object {
+        private const val TAG = "AuthRepository"
+    }
 
     private val _currentUser = MutableStateFlow<User?>(null)
     override val currentUser: StateFlow<User?> = _currentUser
@@ -55,7 +60,7 @@ class AuthRepositoryImpl @Inject constructor(
                             _currentUser.value = newUser
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        Log.e(TAG, "Failed to load/create user profile for ${firebaseUser.uid}", e)
                         // Offline fallback — safe defaults (EMPLOYEE, no admin escalation)
                         _currentUser.value = User(
                             uid = firebaseUser.uid,
@@ -163,7 +168,7 @@ class AuthRepositoryImpl @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Google sign-in failed", e)
             Result.failure(e)
         }
     }
@@ -177,7 +182,7 @@ class AuthRepositoryImpl @Inject constructor(
                 _currentUser.value = u
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to refresh current user", e)
         }
     }
 

@@ -1,6 +1,6 @@
 package com.stocksnap.presentation.auth
 
-import android.content.pm.PackageManager
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -36,7 +36,7 @@ import com.stocksnap.ui.theme.AppBackground
 import com.stocksnap.ui.theme.PrimaryGreen
 import com.stocksnap.ui.theme.TextPrimary
 import com.stocksnap.ui.theme.TextSecondary
-import java.security.MessageDigest
+private const val TAG = "LoginScreen"
 
 @Composable
 fun LoginScreen(
@@ -57,33 +57,11 @@ fun LoginScreen(
                 viewModel.signInWithGoogle(account, onLoginSuccess)
             }
         } catch (e: ApiException) {
-            e.printStackTrace()
-            val clientId = context.getString(R.string.default_web_client_id)
-            viewModel.setError("Google Sign-In failed (Code ${e.statusCode}). ClientID: ${clientId.take(15)}...")
+            Log.e(TAG, "Google Sign-In failed with code ${e.statusCode}", e)
+            viewModel.setError("Google Sign-In failed (Code ${e.statusCode}).")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Google Sign-In failed", e)
             viewModel.setError("Sign-In error: ${e.localizedMessage}")
-        }
-    }
-
-    // Calculate SHA-1 for debugging Code 10
-    val sha1 = remember {
-        try {
-            val info = context.packageManager.getPackageInfo(
-                context.packageName,
-                PackageManager.GET_SIGNATURES
-            )
-            val signatures = info.signatures
-            if (signatures != null && signatures.isNotEmpty()) {
-                val md = MessageDigest.getInstance("SHA-1")
-                md.update(signatures[0].toByteArray())
-                val digest = md.digest()
-                digest.joinToString("") { "%02x".format(it) }
-            } else {
-                "No Signature"
-            }
-        } catch (e: Exception) {
-            "Error computing SHA-1"
         }
     }
 
@@ -244,14 +222,6 @@ fun LoginScreen(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "App SHA-1: $sha1",
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                color = TextSecondary.copy(alpha = 0.5f)
-            )
         }
     }
 }

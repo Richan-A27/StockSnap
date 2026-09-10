@@ -24,7 +24,7 @@ object ThumbnailUtils {
                 android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to read EXIF rotation for $imagePath", e)
         }
         return matrix
     }
@@ -51,7 +51,7 @@ object ThumbnailUtils {
 
             thumbFile.absolutePath
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to generate thumbnail for $imagePath", e)
             null
         }
     }
@@ -112,7 +112,7 @@ object ThumbnailUtils {
 
             catalogFile.absolutePath
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to generate catalog image for $originalPath", e)
             null
         }
     }

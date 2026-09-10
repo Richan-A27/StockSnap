@@ -24,6 +24,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // No schema change between v2 and v3 — placeholder so devices
+                // still on v2 don't hit fallbackToDestructiveMigration() and lose local data.
+            }
+        }
+
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE products ADD COLUMN weight TEXT NOT NULL DEFAULT ''")

@@ -29,6 +29,7 @@ object AppModule {
         return Room.databaseBuilder(context, AppDatabase::class.java, "stocksnap-db")
             .addMigrations(
                 AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3,
                 AppDatabase.MIGRATION_3_4,
                 AppDatabase.MIGRATION_4_5,
                 AppDatabase.MIGRATION_5_6

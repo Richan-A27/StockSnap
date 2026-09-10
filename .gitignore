@@ -1,0 +1,33 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.DS_Store
+
+# Local machine config (SDK path, per-developer)
+local.properties
+
+# Build/debug logs
+*.log
+build_out.txt
+debug_out.txt
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Unintegrated research clone (not part of the app)
+ml-mobileclip/
+
+# Signing
+*.jks
+*.keystore
+
+# Build outputs (APK/AAB)
+*.apk
+*.aab

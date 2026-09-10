@@ -1,6 +1,7 @@
 package com.stocksnap.data.repository
 
 import android.net.Uri
+import android.util.Log
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -37,6 +38,10 @@ class ProductRepositoryImpl @Inject constructor(
     private val storage: FirebaseStorage,
     private val workManager: WorkManager
 ) : ProductRepository {
+
+    companion object {
+        private const val TAG = "ProductRepository"
+    }
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private var productsListener: ListenerRegistration? = null
@@ -75,7 +80,7 @@ class ProductRepositoryImpl @Inject constructor(
                     storage.reference.child("products/${local.barcode}/front.jpg").delete().await()
                 } catch (_: Exception) {}
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "Failed to delete product ${local.barcode} from Firestore/Storage", e)
             }
         }
     }
@@ -112,7 +117,7 @@ class ProductRepositoryImpl @Inject constructor(
                 } else null
             } else null
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to fetch product by barcode from Firestore: $barcode", e)
             null
         }
     }
@@ -168,7 +173,7 @@ class ProductRepositoryImpl @Inject constructor(
             try {
                 firestore.collection("arrivals").document(local.arrivalId).delete().await()
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "Failed to delete arrival ${local.arrivalId} from Firestore", e)
             }
         }
     }
@@ -264,7 +269,7 @@ class ProductRepositoryImpl @Inject constructor(
             productsListener = firestore.collection("products")
                 .addSnapshotListener { snapshots, e ->
                     if (e != null) {
-                        e.printStackTrace()
+                        Log.e(TAG, "Products listener error", e)
                         return@addSnapshotListener
                     }
                     if (snapshots != null) {
@@ -307,7 +312,7 @@ class ProductRepositoryImpl @Inject constructor(
             arrivalsListener = firestore.collection("arrivals")
                 .addSnapshotListener { snapshots, e ->
                     if (e != null) {
-                        e.printStackTrace()
+                        Log.e(TAG, "Arrivals listener error", e)
                         return@addSnapshotListener
                     }
                     if (snapshots != null) {
@@ -359,7 +364,7 @@ class ProductRepositoryImpl @Inject constructor(
                 .limit(100)
                 .addSnapshotListener { snapshots, e ->
                     if (e != null) {
-                        e.printStackTrace()
+                        Log.e(TAG, "Activity logs listener error", e)
                         return@addSnapshotListener
                     }
                     if (snapshots != null) {
@@ -415,7 +420,7 @@ class ProductRepositoryImpl @Inject constructor(
                     val file = File(path)
                     if (file.exists()) file.delete()
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e(TAG, "Failed to delete local file: $path", e)
                 }
             }
     }
@@ -427,7 +432,7 @@ class ProductRepositoryImpl @Inject constructor(
                 .await()
                 .toObjects(User::class.java)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to fetch all users", e)
             emptyList()
         }
     }
@@ -447,7 +452,7 @@ class ProductRepositoryImpl @Inject constructor(
                 productName = "$currentAdmin $action $name"
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to update active status for user $uid", e)
         }
     }
 
@@ -472,7 +477,7 @@ class ProductRepositoryImpl @Inject constructor(
                 productName = "$currentAdmin approved $name"
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to approve user $uid", e)
         }
     }
 
@@ -493,7 +498,7 @@ class ProductRepositoryImpl @Inject constructor(
                 productName = "$currentAdmin rejected $name"
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to reject user $uid", e)
         }
     }
 
@@ -509,7 +514,7 @@ class ProductRepositoryImpl @Inject constructor(
                 productName = "$currentAdmin disabled $name"
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to disable user $uid", e)
         }
     }
 
@@ -525,7 +530,7 @@ class ProductRepositoryImpl @Inject constructor(
                 productName = "$currentAdmin enabled $name"
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to enable user $uid", e)
         }
     }
 }

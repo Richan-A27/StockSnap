@@ -2,6 +2,7 @@ package com.stocksnap.util
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.util.Log
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
@@ -11,6 +12,8 @@ import com.google.zxing.qrcode.QRCodeWriter
  * Completely independent from barcode scanning / MLKitProcessor.
  */
 object QrCodeGenerator {
+
+    private const val TAG = "QrCodeGenerator"
 
     /**
      * Generates a QR code Bitmap from the given content string.
@@ -37,7 +40,7 @@ object QrCodeGenerator {
             }
             bitmap
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to generate QR code for content: $content", e)
             null
         }
     }
